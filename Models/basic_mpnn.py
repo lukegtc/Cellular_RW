@@ -10,23 +10,26 @@ from transform import AddRandomWalkPE
 
 
 class BasicMPNN(nn.Module):
-    def __init__(self, feat_in, pos_in, num_hidden, num_layers):
+    def __init__(self, feat_in, edge_feat_in, num_hidden, num_layers):
         super().__init__()
         self.embed = nn.Linear(feat_in, num_hidden)
+        self.edge_embed = nn.Linear(edge_feat_in, num_hidden)
         self.layers = nn.ModuleList([BasicMPNNLayer(num_hidden) for _ in range(num_layers)])
         self.predict = nn.Linear(num_hidden, 1)
 
     def forward(self, graph):
         #print(graph.x, graph.pos)
-        h, edge_index, batch = graph.x, graph.edge_index, graph.batch
+        h, edge_index, edge_attr,  batch = graph.x, graph.edge_index, graph.edge_attr, graph.batch
 
         # h_nodes, h_edges, h_triangles
         h = h.float()
         h = self.embed(h)
+        edge_attr = edge_attr.unsqueeze(1).float()
+        edge_attr = self.edge_embed(edge_attr)
 
         for layer in self.layers:
             # h_nodes, h_edges, h_triangles = layer(..., edge_nodes_nodes, edge_nodes_edges, ...)
-            h = h + nn.functional.relu(layer(h, edge_index))
+            h = h + nn.functional.relu(layer(h, edge_index, edge_attr))
 
         h_agg = global_add_pool(h, batch)
         final_prediction = self.predict(h_agg)
@@ -38,7 +41,7 @@ class BasicMPNNLayer(nn.Module):
     def __init__(self, num_hidden):
         super().__init__()
         self.message_mlp = nn.Linear(3 * num_hidden, num_hidden)
-        self.update_mlp = nn.Linear(3 * num_hidden, num_hidden)
+        self.update_mlp = nn.Linear(2 * num_hidden, num_hidden)
 
     def forward(self, h, edge_index, edge_attr):
         send, rec = edge_index
@@ -48,7 +51,6 @@ class BasicMPNNLayer(nn.Module):
         out = self.update_mlp(torch.cat((h, messages_agg), dim=1))
 
         return out
-
 
 # transform = PEAddWR(....)
 # transform = AddRandomWalkPE(walk_length=4)
