@@ -51,14 +51,14 @@ class BasicMPNNLayer(nn.Module):
 
 
 # transform = PEAddWR(....)
-transform = AddRandomWalkPE(walk_length=4)
-data = ZINC('datasets/ZINC', split='val', pre_transform=transform) #QM9('datasets/QM9', pre_transform=transform)
+# transform = AddRandomWalkPE(walk_length=4)
+data = ZINC('datasets/ZINC_basic') #QM9('datasets/QM9', pre_transform=transform)
 
 train_loader = DataLoader(data[:10], batch_size=32)
 val_loader = DataLoader(data[10:12], batch_size=32)
 test_loader = DataLoader(data[12:14], batch_size=32)
 
-model = BasicMPNN(1, 3, 32, 4)
+model = BasicMPNN(11, 3, 32, 4)
 optimizer = op.Adam(model.parameters(), lr=1e-3)
 criterion = nn.L1Loss(reduce='sum')
 
@@ -68,7 +68,7 @@ for _ in range(10):
     model.train()
     for batch in train_loader:
         optimizer.zero_grad()
-        #print(batch.y.size())
+        print(batch.y.size())
         label = batch.y  # alpha
 
         out = model(batch)
@@ -86,7 +86,7 @@ model.eval()
 test_loss = 0
 for batch in test_loader:
     out = model(batch)
-    label = batch.y
+    label = batch.y[:, 1]
     loss = criterion(out, label)
 
     test_loss += loss.item()

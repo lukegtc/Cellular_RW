@@ -8,7 +8,7 @@ from torch_geometric.utils import (
     scatter,
     to_edge_index,
     to_scipy_sparse_matrix,
-    to_torch_csr_tensor,
+    to_torch_coo_tensor,
 )
 import networkx as nx
 
@@ -63,13 +63,17 @@ class AddRandomWalkPE(BaseTransform):
         # value = scatter(value, combined_indices[0], dim_size=N, reduce='sum').clamp(min=1)[row]
         value = scatter(value, combined_indices[0], dim_size=num_combined_nodes, reduce='sum').clamp(min=1)[combined_indices[0]]
         value = 1.0 / value
-        adj = to_torch_csr_tensor(combined_indices, value, size=(num_combined_nodes,num_combined_nodes))
+
+        # we used to_torch_csr_tensor before, but it gives Runtime Error if you don't have MKL installed
+        # I couldn't install MKL bc it's for Intel processors, so I changed it to COO tensor
+        # The sparse tensor is unpacked at every step of the loop, so it should give the same result
+        adj = to_torch_coo_tensor(combined_indices, value, size=(num_combined_nodes,num_combined_nodes))
 
         out = adj
         pe_list = [get_self_loop_attr(*to_edge_index(out), num_nodes=num_combined_nodes)]
         for _ in range(self.walk_length - 1):
             out = out @ adj
-            pe_list.append(get_self_loop_attr(*to_edge_index(out), num_combined_nodes))
+            pe_list.append(get_self_loop_attr(*to_edge_index(out), num_nodes=num_combined_nodes))
         pe = torch.stack(pe_list, dim=-1)
         data = add_node_attr(data, pe, attr_name=self.attr_name)
         return data
