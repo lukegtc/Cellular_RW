@@ -2,10 +2,11 @@ import torch
 import torch.nn as nn
 import torch.optim as op
 from torch_geometric.nn import global_add_pool
-from torch_geometric.datasets import QM9
+from torch_geometric.datasets import QM9, ZINC
 from torch_geometric.data import DataLoader
 from torch_scatter import scatter_add
-from torch_geometric.transforms import AddRandomWalkPE
+from transform import AddRandomWalkPE
+# from torch_geometric.transforms import AddRandomWalkPE
 
 
 class BasicMPNN(nn.Module):
@@ -16,6 +17,7 @@ class BasicMPNN(nn.Module):
         self.predict = nn.Linear(num_hidden, 1)
 
     def forward(self, graph):
+        print(graph.x, graph.pos)
         h, p, edge_index, batch = graph.x, graph.pos, graph.edge_index, graph.batch
 
         # h_nodes, h_edges, h_triangles
@@ -48,12 +50,12 @@ class BasicMPNNLayer(nn.Module):
 
 
 # transform = PEAddWR(....)
-transform = AddRandomWalkPE(walk_length=10)
-data = QM9('datasets/QM9', pre_transform=transform)
+transform = AddRandomWalkPE(walk_length=4)
+data = ZINC('datasets/ZINC', split='val', pre_transform=transform) #QM9('datasets/QM9', pre_transform=transform)
 
-train_loader = DataLoader(data[:1000], batch_size=32)
-val_loader = DataLoader(data[1000:1200], batch_size=32)
-test_loader = DataLoader(data[1200:1400], batch_size=32)
+train_loader = DataLoader(data[:10], batch_size=32)
+val_loader = DataLoader(data[10:12], batch_size=32)
+test_loader = DataLoader(data[12:14], batch_size=32)
 
 model = BasicMPNN(11, 3, 32, 4)
 optimizer = op.Adam(model.parameters(), lr=1e-3)
@@ -65,7 +67,8 @@ for _ in range(10):
     model.train()
     for batch in train_loader:
         optimizer.zero_grad()
-        label = batch.y[:, 1]  # alpha
+        print(batch.y.size())
+        label = batch.y  # alpha
 
         out = model(batch)
 
