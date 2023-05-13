@@ -96,8 +96,8 @@ if __name__ == '__main__':
     data_train = ZINC('datasets/ZINC', split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
     data_val = ZINC('datasets/ZINC', split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
 
-    train_loader = DataLoader(data_train, batch_size=32)
-    val_loader = DataLoader(data_val, batch_size=32)
+    train_loader = DataLoader(data_train, batch_size=32, drop_last=True)
+    val_loader = DataLoader(data_val, batch_size=32, drop_last=True)
     # test_loader = DataLoader(data[12:14], batch_size=32)
 
     gnn_params = {
