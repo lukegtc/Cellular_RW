@@ -51,6 +51,7 @@ class LitZINCModel(pl.LightningModule):
         out = self.model(batch)
         loss = self.criterion(out, label)
         self.log("train_loss", loss)
+        self.log('lr', self.trainer.optimizers[0].param_groups[0]['lr'])
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -73,7 +74,10 @@ class LitZINCModel(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = op.Adam(model.parameters(), lr=1e-3)
-        return [optimizer]
+        scheduler = op.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=25,
+                                                      min_lr=1e-5)
+        return {'optimizer': optimizer, 'lr_scheduler': scheduler, 'monitor': 'val_loss'}
+        # return [optimizer], [scheduler]
 
 
 if __name__ == '__main__':
@@ -83,8 +87,8 @@ if __name__ == '__main__':
     data_train = ZINC('datasets/ZINC', split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
     data_val = ZINC('datasets/ZINC', split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
 
-    train_loader = DataLoader(data_train, batch_size=32)
-    val_loader = DataLoader(data_val, batch_size=32)
+    train_loader = DataLoader(data_train[:100], batch_size=32)
+    val_loader = DataLoader(data_val[100:200], batch_size=32)
 
     gnn_params = {
         'feat_in': 1,
