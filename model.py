@@ -78,7 +78,7 @@ class LSPE_MPGNN(nn.Module):
         self.h_embed = nn.Linear(feat_in, num_hidden)
         self.e_embed = nn.Linear(edge_feat_in, num_hidden)
         self.p_embed = nn.Linear(pos_in, num_hidden)
-        self.layers = nn.ModuleList([MPGNNLayer(num_hidden) for _ in range(num_layers)])
+        self.layers = nn.ModuleList([LSPE_MPGNNLayer(num_hidden) for _ in range(num_layers)])
         self.predict = nn.Linear(2*num_hidden, 1)
 
     def forward(self, graph):
