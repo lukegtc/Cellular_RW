@@ -45,8 +45,6 @@ class LitZINCModel(pl.LightningModule):
         super().__init__()
         self.model = ZINCModel(gnn_params, head_params, use_pe)
         self.criterion = nn.L1Loss(reduce='sum')
-        self.labels = []
-        self.outs = []
 
     def training_step(self, batch, batch_idx):
         label = batch.y
@@ -60,8 +58,6 @@ class LitZINCModel(pl.LightningModule):
         out = self.model(batch)
         loss = self.criterion(out, label)
         self.log("val_loss", loss)
-        self.labels.append(label)
-        self.outs.append(out)
         return loss
 
     def on_validation_epoch_end(self) -> None:
@@ -75,15 +71,6 @@ class LitZINCModel(pl.LightningModule):
         val_loss = self.trainer.callback_metrics['val_loss']
         print(f'Current val loss {val_loss}')
 
-        labels = torch.stack(self.labels)
-        outs = torch.stack(self.outs)
-        labels = torch.argmax(labels, dim=1)
-        outs = torch.argmax(outs, dim=1)
-        acc = (labels == outs).float().mean().item()
-        print(f'Accuracy {acc}')
-        self.outs = []
-        self.labels = []
-
     def configure_optimizers(self):
         optimizer = op.Adam(model.parameters(), lr=1e-3)
         return [optimizer]
@@ -95,11 +82,9 @@ if __name__ == '__main__':
     transform = AddRandomWalkPE(walk_length=args.walk_length)
     data_train = ZINC('datasets/ZINC', split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
     data_val = ZINC('datasets/ZINC', split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     train_loader = DataLoader(data_train, batch_size=32)
     val_loader = DataLoader(data_val, batch_size=32)
-    # test_loader = DataLoader(data[12:14], batch_size=32)
 
     gnn_params = {
         'feat_in': 1,
@@ -113,7 +98,6 @@ if __name__ == '__main__':
     }
 
     model = LitZINCModel(gnn_params, head_params)
-    model = model.to(device)
 
     trainer = pl.Trainer(max_epochs=args.max_epochs,
                          accelerator=args.accelerator,

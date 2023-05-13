@@ -60,7 +60,7 @@ class AddRandomWalkPE(BaseTransform):
         # value = data.edge_weight
         # if value is None:
             # value = torch.ones(data.num_edges, device=row.device)
-        num_combined_nodes = data.num_edges + num_added_nodes
+        num_combined_nodes = data.num_nodes + num_added_nodes
         value = torch.ones(combined_indices.size()[1])
         # value = scatter(value, combined_indices[0], dim_size=N, reduce='sum').clamp(min=1)[row]
         value = scatter(value, combined_indices[0], dim_size=num_combined_nodes, reduce='sum').clamp(min=1)[combined_indices[0]]
@@ -77,10 +77,8 @@ class AddRandomWalkPE(BaseTransform):
             out = out @ adj
             pe_list.append(get_self_loop_attr(*to_edge_index(out), num_nodes=num_combined_nodes))
         pe = torch.stack(pe_list, dim=-1)
-        data = add_node_attr(data, pe, attr_name=self.attr_name)
-
-
-
+        pe_nodes = pe[:data.num_nodes, :]
+        data = add_node_attr(data, pe_nodes, attr_name=self.attr_name)
         return data
 
     def create_graph_index(self, data):
