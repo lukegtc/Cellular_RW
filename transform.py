@@ -12,6 +12,7 @@ from torch_geometric.utils import (
 )
 import networkx as nx
 
+
 def add_node_attr(data: Data, value: Any,
                   attr_name: Optional[str] = None) -> Data:
     # TODO Move to `BaseTransform`.
@@ -25,6 +26,7 @@ def add_node_attr(data: Data, value: Any,
         data[attr_name] = value
 
     return data
+
 
 class AddRandomWalkPE(BaseTransform):
     r"""Adds the random walk positional encoding from the `"Graph Neural
@@ -76,6 +78,9 @@ class AddRandomWalkPE(BaseTransform):
             pe_list.append(get_self_loop_attr(*to_edge_index(out), num_nodes=num_combined_nodes))
         pe = torch.stack(pe_list, dim=-1)
         data = add_node_attr(data, pe, attr_name=self.attr_name)
+
+
+
         return data
 
     def create_graph_index(self, data):
