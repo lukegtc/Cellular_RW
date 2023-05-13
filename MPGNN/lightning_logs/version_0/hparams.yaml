@@ -1,0 +1,13 @@
+gnn_params:
+  edge_feat_in: 1
+  feat_in: 1
+  num_hidden: 32
+  num_layers: 16
+head_params:
+  num_hidden: 32
+training_params:
+  lr: 0.001
+  lr_decay: 0.5
+  min_lr: 1.0e-06
+  patience: 25
+  use_pe: false
