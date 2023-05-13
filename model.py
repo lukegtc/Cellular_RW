@@ -22,6 +22,25 @@ class MPGNN(nn.Module):
         return h
 
 
+class MPGNN_PE(nn.Module):
+    def __init__(self, feat_in, edge_feat_in, num_hidden, num_layers):
+        super().__init__()
+        self.embed = nn.Linear(feat_in, num_hidden)
+        self.edge_embed = nn.Linear(edge_feat_in, num_hidden)
+        self.layers = nn.ModuleList([MPGNNLayer(num_hidden) for _ in range(num_layers)])
+
+    def forward(self, graph):
+        h, e, edge_index, batch, p = graph.x, graph.edge_attr, graph.edge_index, graph.batch, graph.p
+        h = self.embed(torch.cat(h,p), dim=1)
+        e = self.edge_embed(e)
+
+        for layer in self.layers:
+            h, e = layer(h, e, edge_index)
+
+        h = global_add_pool(h, batch)
+        return h
+
+
 class MPGNNLayer(nn.Module):
     def __init__(self, num_hidden):
         super().__init__()
@@ -67,7 +86,7 @@ class LSPE_MPGNN(nn.Module):
 
         h = h.float()
         h = self.h_embed(h)
-
+        # h = self.h_embed(torch.cat(h,p), dim =1)
         e = e.unsqueeze(1).float()
         e = self.e_embed(e)
 
