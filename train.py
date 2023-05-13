@@ -97,8 +97,8 @@ if __name__ == '__main__':
     data_val = ZINC('datasets/ZINC', split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    train_loader = DataLoader(data_train, batch_size=32).to(device)
-    val_loader = DataLoader(data_val, batch_size=32).to(device)
+    train_loader = DataLoader(data_train, batch_size=32)
+    val_loader = DataLoader(data_val, batch_size=32)
     # test_loader = DataLoader(data[12:14], batch_size=32)
 
     gnn_params = {
