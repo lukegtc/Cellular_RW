@@ -110,7 +110,7 @@ if __name__ == '__main__':
         'lr_decay': 0.5,
         'patience': 25,
         'min_lr': 1e-6,
-        'use_pe': True,
+        'use_pe': args.use_pe,
     }
 
     model = LitZINCModel(gnn_params, head_params, training_params)
