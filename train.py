@@ -10,6 +10,7 @@ from model import MPGNN, MPGNNHead
 from config import parse_train_args
 
 import pytorch_lightning as pl
+import numpy as np
 
 
 # we define model for a given dataset because the attribute names need not be consistent between datasets,
@@ -84,8 +85,8 @@ class LitZINCModel(pl.LightningModule):
         val_loss = self.trainer.callback_metrics['val_loss']
         print(f'Current val loss {val_loss}')
 
-        labels = self.labels
-        outs = self.outs
+        labels = torch.as_tensor(np.array(self.labels))
+        outs = torch.as_tensor(np.array(self.outs))
         acc = accuracy_TU(outs, labels)
         print(f'Accuracy {acc}')
 
