@@ -125,6 +125,7 @@ if __name__ == '__main__':
 
     trainer = pl.Trainer(max_epochs=args.max_epochs,
                          accelerator=args.accelerator,
+                         devices=args.devices,
                          log_every_n_steps=10,
                          default_root_dir=args.trainer_root_dir)
     trainer.fit(model, train_loader, val_loader, ckpt_path=args.ckpt_path)
