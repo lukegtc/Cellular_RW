@@ -40,16 +40,6 @@ class ZINCModel(nn.Module):
         out = self.head(out)
         return out
 
-class LabelAccumulatorCallback(pl.Callback):
-    def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx):
-        # Extract the labels from the current batch
-        labels = batch['labels']
-
-        # Save the labels to a list
-        if 'accumulated_labels' not in trainer.callback_metrics:
-            trainer.callback_metrics['accumulated_labels'] = []
-        trainer.callback_metrics['accumulated_labels'].extend(labels.cpu().numpy().tolist())
-
 class LitZINCModel(pl.LightningModule):
     def __init__(self, gnn_params, head_params, use_pe=False):
         super().__init__()
@@ -105,9 +95,10 @@ if __name__ == '__main__':
     transform = AddRandomWalkPE(walk_length=args.walk_length)
     data_train = ZINC('datasets/ZINC', split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
     data_val = ZINC('datasets/ZINC', split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    train_loader = DataLoader(data_train, batch_size=32)
-    val_loader = DataLoader(data_val, batch_size=32)
+    train_loader = DataLoader(data_train, batch_size=32).to(device)
+    val_loader = DataLoader(data_val, batch_size=32).to(device)
     # test_loader = DataLoader(data[12:14], batch_size=32)
 
     gnn_params = {
@@ -122,6 +113,7 @@ if __name__ == '__main__':
     }
 
     model = LitZINCModel(gnn_params, head_params)
+    model = model.to(device)
 
     trainer = pl.Trainer(max_epochs=args.max_epochs,
                          accelerator=args.accelerator,
