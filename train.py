@@ -89,8 +89,8 @@ if __name__ == '__main__':
     data_train = ZINC('datasets/ZINC', split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
     data_val = ZINC('datasets/ZINC', split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
 
-    train_loader = DataLoader(data_train[:100], batch_size=32)
-    val_loader = DataLoader(data_val[100:200], batch_size=32)
+    train_loader = DataLoader(data_train, batch_size=32)
+    val_loader = DataLoader(data_val, batch_size=32)
 
     gnn_params = {
         'feat_in': 1,
