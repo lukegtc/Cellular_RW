@@ -41,10 +41,12 @@ class ZINCModel(nn.Module):
         return out
 
 class LitZINCModel(pl.LightningModule):
-    def __init__(self, gnn_params, head_params, use_pe=False):
+    def __init__(self, gnn_params, head_params, training_params):
         super().__init__()
-        self.model = ZINCModel(gnn_params, head_params, use_pe)
+        self.save_hyperparameters()
+        self.model = ZINCModel(gnn_params, head_params, training_params['use_pe'])
         self.criterion = nn.L1Loss(reduce='sum')
+        self.training_params = training_params
 
     def training_step(self, batch, batch_idx):
         label = batch.y
@@ -73,11 +75,11 @@ class LitZINCModel(pl.LightningModule):
         print(f'Current val loss {val_loss}')
 
     def configure_optimizers(self):
-        optimizer = op.Adam(model.parameters(), lr=1e-3)
-        scheduler = op.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=25,
-                                                      min_lr=1e-5)
+        optimizer = op.Adam(model.parameters(), lr=self.training_params['lr'])
+        scheduler = op.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=self.training_params['lr_decay'],
+                                                      patience=self.training_params['patience'],
+                                                      min_lr=self.training_params['min_lr'])
         return {'optimizer': optimizer, 'lr_scheduler': scheduler, 'monitor': 'val_loss'}
-        # return [optimizer], [scheduler]
 
 
 if __name__ == '__main__':
@@ -101,7 +103,15 @@ if __name__ == '__main__':
         'num_hidden': 32,
     }
 
-    model = LitZINCModel(gnn_params, head_params)
+    training_params = {
+        'lr': 1e-3,
+        'lr_decay': 0.5,
+        'patience': 25,
+        'min_lr': 1e-5,
+        'use_pe': args.use_pe,
+    }
+
+    model = LitZINCModel(gnn_params, head_params, training_params)
 
     trainer = pl.Trainer(max_epochs=args.max_epochs,
                          accelerator=args.accelerator,
