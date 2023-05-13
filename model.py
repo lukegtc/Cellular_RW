@@ -1,8 +1,18 @@
 import torch
 import torch.nn as nn
+from torch_geometric.datasets import ZINC
 from torch_geometric.nn import global_add_pool
+from torch_geometric.transforms import AddRandomWalkPE
 from torch_scatter import scatter_add
+import torch
+import torch.nn as nn
+import torch.optim as op
+from torch_geometric.datasets import ZINC
+from torch_geometric.data import DataLoader
+import pytorch_lightning as pl
 
+from metrics import accuracy_TU
+from transform import AddRandomWalkPE
 
 class MPGNN(nn.Module):
     def __init__(self, feat_in, edge_feat_in, num_hidden, num_layers):
@@ -82,7 +92,7 @@ class LSPE_MPGNN(nn.Module):
         self.predict = nn.Linear(2*num_hidden, 1)
 
     def forward(self, graph):
-        h, edge_index, e, batch, p = graph.x, graph.edge_index, graph.edge_attr, graph.batch, graph.p
+        h, edge_index, e, batch, p = graph.x, graph.edge_index, graph.edge_attr, graph.batch, graph.pos
 
         h = h.float()
         h = self.h_embed(h)

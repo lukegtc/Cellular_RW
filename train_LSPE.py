@@ -19,7 +19,7 @@ import numpy as np
 class ZINCModel(nn.Module):
     def __init__(self, gnn_params, head_params, use_pe=False):
         super().__init__()
-        self.gnn = MPGNN(**gnn_params)
+        self.gnn = LSPE_MPGNN(**gnn_params)
         self.head = MPGNNHead(**head_params)
         self.use_pe = use_pe
 
@@ -32,11 +32,12 @@ class ZINCModel(nn.Module):
             p = graph.random_walk_pe
             h = torch.cat((h, p), dim=1)
 
-        return h, edge_index, e, batch
+        return h, edge_index, e, batch,p
 
     def forward(self, graph):
-        h, edge_index, e, batch = self.extract_gnn_args(graph)
-        out = self.gnn(h, e, edge_index, batch)
+        h, edge_index, e, batch,p = self.extract_gnn_args(graph)
+        graph.h,graph.edge_index,graph.e, graph.batch, graph.pos =  h, edge_index, e, batch,p
+        out = self.gnn(graph)
         out = self.head(out)
         return out
 
@@ -94,6 +95,7 @@ if __name__ == '__main__':
 
     gnn_params = {
         'feat_in': args.feat_in,
+        'pos_in': 1,
         'edge_feat_in': 1,
         'num_hidden': 32,
         'num_layers': 16
@@ -108,7 +110,7 @@ if __name__ == '__main__':
         'lr_decay': 0.5,
         'patience': 25,
         'min_lr': 1e-6,
-        'use_pe': args.use_pe,
+        'use_pe': True,
     }
 
     model = LitZINCModel(gnn_params, head_params, training_params)
