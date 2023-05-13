@@ -57,11 +57,15 @@ class AddRandomWalkPE(BaseTransform):
         combined_indices = torch.hstack([data.edge_index, cycle_indices]).type(data.edge_index.dtype)
 
 
-        # value = data.edge_weight
-        # if value is None:
-            # value = torch.ones(data.num_edges, device=row.device)
+        value = data.edge_weight
+        if value is None:
+            value = torch.ones(combined_indices.size()[1])
+        else:
+            # Get the value of cycles by averaging the edge weights of the edges in the cycle from cycle indices
+            max_node = max(data.nodes())
+            value = torch.cat([value, torch.mean(value[cycle_indices[0] == max_node + torch.arange(num_added_nodes)])])
+
         num_combined_nodes = data.num_nodes + num_added_nodes
-        value = torch.ones(combined_indices.size()[1])
         # value = scatter(value, combined_indices[0], dim_size=N, reduce='sum').clamp(min=1)[row]
         value = scatter(value, combined_indices[0], dim_size=num_combined_nodes, reduce='sum').clamp(min=1)[combined_indices[0]]
         value = 1.0 / value
@@ -89,7 +93,7 @@ class AddRandomWalkPE(BaseTransform):
             nx_graph.add_edge(i.item(), j.item())
 
         cycles = self.get_simple_cycles(nx_graph)
-        largest_cycle = max([len(cycle) for cycle in cycles])
+        # largest_cycle = max([len(cycle) for cycle in cycles])
         cycles = [cycle for cycle in cycles if len(cycle) > 2]
         idx = self.get_cycle_index(nx_graph)
 
