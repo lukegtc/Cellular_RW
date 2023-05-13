@@ -4,6 +4,7 @@ import torch.optim as op
 from torch_geometric.datasets import ZINC
 from torch_geometric.data import DataLoader
 
+from metrics import accuracy_TU
 from transform import AddRandomWalkPE
 from model import MPGNN, MPGNNHead
 from config import parse_train_args
@@ -38,12 +39,23 @@ class ZINCModel(nn.Module):
         out = self.head(out)
         return out
 
+class LabelAccumulatorCallback(pl.Callback):
+    def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx):
+        # Extract the labels from the current batch
+        labels = batch['labels']
+
+        # Save the labels to a list
+        if 'accumulated_labels' not in trainer.callback_metrics:
+            trainer.callback_metrics['accumulated_labels'] = []
+        trainer.callback_metrics['accumulated_labels'].extend(labels.cpu().numpy().tolist())
 
 class LitZINCModel(pl.LightningModule):
     def __init__(self, gnn_params, head_params, use_pe=False):
         super().__init__()
         self.model = ZINCModel(gnn_params, head_params, use_pe)
         self.criterion = nn.L1Loss(reduce='sum')
+        self.labels = []
+        self.outs = []
 
     def training_step(self, batch, batch_idx):
         label = batch.y
@@ -57,6 +69,8 @@ class LitZINCModel(pl.LightningModule):
         out = self.model(batch)
         loss = self.criterion(out, label)
         self.log("val_loss", loss)
+        self.labels.append(label)
+        self.outs.append(out)
         return loss
 
     def on_validation_epoch_end(self) -> None:
@@ -69,6 +83,11 @@ class LitZINCModel(pl.LightningModule):
         # get last validation epoch loss
         val_loss = self.trainer.callback_metrics['val_loss']
         print(f'Current val loss {val_loss}')
+
+        labels = self.labels
+        outs = self.outs
+        acc = accuracy_TU(outs, labels)
+        print(f'Accuracy {acc}')
 
     def configure_optimizers(self):
         optimizer = op.Adam(model.parameters(), lr=1e-3)
