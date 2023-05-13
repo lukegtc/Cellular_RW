@@ -87,7 +87,9 @@ class LitZINCModel(pl.LightningModule):
 
         labels = torch.stack(self.labels)
         outs = torch.stack(self.outs)
-        acc = accuracy_TU(outs, labels)
+        labels = torch.argmax(labels, dim=1)
+        outs = torch.argmax(outs, dim=1)
+        acc = (labels == outs).float().mean().item()
         print(f'Accuracy {acc}')
 
     def configure_optimizers(self):
