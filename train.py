@@ -91,6 +91,8 @@ class LitZINCModel(pl.LightningModule):
         outs = torch.argmax(outs, dim=1)
         acc = (labels == outs).float().mean().item()
         print(f'Accuracy {acc}')
+        self.outs = []
+        self.labels = []
 
     def configure_optimizers(self):
         optimizer = op.Adam(model.parameters(), lr=1e-3)
