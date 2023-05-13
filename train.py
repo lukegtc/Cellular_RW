@@ -95,7 +95,6 @@ if __name__ == '__main__':
     transform = AddRandomWalkPE(walk_length=args.walk_length)
     data_train = ZINC('datasets/ZINC', split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
     data_val = ZINC('datasets/ZINC', split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     train_loader = DataLoader(data_train, batch_size=32)
     val_loader = DataLoader(data_val, batch_size=32)
@@ -113,7 +112,6 @@ if __name__ == '__main__':
     }
 
     model = LitZINCModel(gnn_params, head_params)
-    model = model.to(device)
 
     trainer = pl.Trainer(max_epochs=args.max_epochs,
                          accelerator=args.accelerator,
