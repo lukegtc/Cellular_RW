@@ -89,14 +89,14 @@ if __name__ == '__main__':
     data_train = ZINC('datasets/ZINC', split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
     data_val = ZINC('datasets/ZINC', split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
 
-    train_loader = DataLoader(data_train, batch_size=32)
-    val_loader = DataLoader(data_val, batch_size=32)
+    train_loader = DataLoader(data_train[:10000], batch_size=32)
+    val_loader = DataLoader(data_val[:1000], batch_size=32)
 
     gnn_params = {
-        'feat_in': 1,
+        'feat_in': args.feat_in,
         'edge_feat_in': 1,
         'num_hidden': 32,
-        'num_layers': 4
+        'num_layers': 16
     }
 
     head_params = {
@@ -107,7 +107,7 @@ if __name__ == '__main__':
         'lr': 1e-3,
         'lr_decay': 0.5,
         'patience': 25,
-        'min_lr': 1e-5,
+        'min_lr': 1e-6,
         'use_pe': args.use_pe,
     }
 

@@ -18,7 +18,7 @@ class BasicMPNN(nn.Module):
 
     def forward(self, graph):
         #print(graph.x, graph.pos)
-        h, edge_index, batch = graph.x, graph.edge_index, graph.batch
+        h, edge_index, batch, edge_attr = graph.x, graph.edge_index, graph.batch, graph.edge_attr
 
         # h_nodes, h_edges, h_triangles
         h = h.float()
@@ -26,7 +26,7 @@ class BasicMPNN(nn.Module):
 
         for layer in self.layers:
             # h_nodes, h_edges, h_triangles = layer(..., edge_nodes_nodes, edge_nodes_edges, ...)
-            h = h + nn.functional.relu(layer(h, edge_index))
+            h = h + nn.functional.relu(layer(h, edge_index, edge_attr))
 
         h_agg = global_add_pool(h, batch)
         final_prediction = self.predict(h_agg)

@@ -5,15 +5,15 @@ def parse_train_args():
     parser = argparse.ArgumentParser()
 
     # dataset params
-    parser.add_argument('--walk_length', type=int, default=4)  # PE random walk length
+    parser.add_argument('--walk_length', type=int, default=20)  # PE random walk length
 
     # training params
-    parser.add_argument('--max_epochs', type=int, default=5)
-    parser.add_argument('--accelerator', type=str, default='cpu')
+    parser.add_argument('--max_epochs', type=int, default=500)
+    parser.add_argument('--accelerator', type=str, default='gpu')
     parser.add_argument('--devices', type=int, default=1)
     parser.add_argument('--trainer_root_dir', type=str, default=None)
     parser.add_argument('--ckpt_path', type=str, default=None)
     parser.add_argument('--use_pe', action='store_true')
-
+    parser.add_argument('--feat_in', type=int, default=1)
     args = parser.parse_args()
     return args
