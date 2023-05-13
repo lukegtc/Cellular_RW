@@ -85,8 +85,8 @@ class LitZINCModel(pl.LightningModule):
         val_loss = self.trainer.callback_metrics['val_loss']
         print(f'Current val loss {val_loss}')
 
-        labels = torch.as_tensor(np.array(self.labels))
-        outs = torch.as_tensor(np.array(self.outs))
+        labels = torch.stack(self.labels)
+        outs = torch.stack(self.outs)
         acc = accuracy_TU(outs, labels)
         print(f'Accuracy {acc}')
 
