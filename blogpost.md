@@ -54,45 +54,23 @@ In this work, we propose a novel initialization method for positional encodings.
 ## MP-GNN architectures \label{mpgnn_section}
 ### Standard MP-GNN.
 We construct a basic MP-GNN architecture, which update equations are defined as:
-$ h_i^{\ell+1} & =f_h\left(h_i^{\ell},\left\{h_j^{\ell}\right\}_{j \in \mathcal{N}_i}, e_{i j}^{\ell}\right), h_i^{\ell+1}, h_i^{\ell} \in \mathbb{R}^d, \\
-        e_{i j}^{\ell+1} & =f_e\left(h_i^{\ell}, h_j^{\ell}, e_{i j}^{\ell}\right), e_{i j}^{\ell+1}, e_{i j}^{\ell} \in \mathbb{R}^d $
+![Standard MPGNN](pictures/standrd_MPGNN.png)
 the $f_h$ and $f_e$ are linear layers, and $\mathcal{N}_i}$ indicates the neighourhood of the node $i$. 
 \\ \\
-\textbf{Positional encoding MP-GNN. } There are existing MP-GNNs that concatenate the positional encoding with the node features. Differently from LSPE-MP-GNNs (\cite{dwivedi2022graph}), the structural and positional information are merged together. 
-\begin{center}
-    \begin{aligned}
-        $h_i^{\ell+1} & =f_h\left(h_i^{\ell},\left\{h_j^{\ell}\right\}_{j \in \mathcal{N}_i}, e_{i j}^{\ell}\right), h_i^{\ell+1}, h_i^{\ell} \in \mathbb{R}^d \\
-        e_{i j}^{\ell+1} & =f_e\left(h_i^{\ell}, h_j^{\ell}, e_{i j}^{\ell}\right), e_{i j}^{\ell+1}, e_{i j}^{\ell} \in \mathbb{R}^d
-        $
-    \end{aligned}
-\end{center}
+### Positional encoding MP-GNN. 
+There are existing MP-GNNs that concatenate the positional encoding with the node features. Differently from LSPE-MP-GNNs (\cite{dwivedi2022graph}), the structural and positional information are merged together. 
+![PE MPGNN](pictures/positional_encoding_MPGNN.png)
 
-\begin{center}
-    with initial $h_i^{\ell=0}=\mathrm{LL}_h\left(\left[\begin{array}{c}h_i^{\text {in }} \\ p_i^{\mathrm{in}}\end{array}\right]\right)=D^0\left[\begin{array}{c}h_i^{\mathrm{in}} \\ p_i^{\text {in }}\end{array}\right]+d^0 \in \mathbb{R}^d$, \\ and $e_{i j}^{\ell=0}=\mathrm{LL}_e\left(e_{i j}^{\mathrm{in}}\right)=B^0 e_{i j}^{\mathrm{in}}+b^0 \in \mathbb{R}^d$
-\end{center}
 \\ 
-\textbf{MP-GNN-LSPE. } The decoupling of positional and structural information is shown in the update equation that are defined as:
-\begin{center}
-    \begin{aligned}
-        & h_i^{\ell+1}=f_h\left(\left[\begin{array}{c}
-        h_i^{\ell} \\
-        p_i^{\ell}
-        \end{array}\right],\left\{\left[\begin{array}{c}
-        h_j^{\ell} \\
-        p_j^{\ell}
-        \end{array}\right]\right\}_{j \in \mathcal{N}_i}, e_{i j}^{\ell}\right), h_i^{\ell+1}, h_i^{\ell} \in \mathbb{R}^d, \\
-        & e_{i j}^{\ell+1}=f_e\left(h_i^{\ell}, h_j^{\ell}, e_{i j}^{\ell}\right), e_{i j}^{\ell+1}, e_{i j}^{\ell} \in \mathbb{R}^d \\
-        & p_i^{\ell+1}=f_p\left(p_i^{\ell},\left\{p_j^{\ell}\right\}_{j \in \mathcal{N}_i}, e_{i j}^{\ell}\right), p_i^{\ell+1}, p_i^{\ell} \in \mathbb{R}^d
-    \end{aligned}
-\end{center}
+### MP-GNN-LSPE
+The decoupling of positional and structural information is shown in the update equation that are defined as:
+![LSPE MPGNN](pictures/MP_GNN_LSPE.png)
 The novelty introduced by LSPE is the update of the positional representation, along with the concatenation with the node features. 
 
-\subsection{Definition of initial PE - Random Walk} \label{rwpe} 
+ ### Definition of initial PE - Random Walk \label{rwpe} 
 The traditional RWPE is defined as the landing probability of a node $i$ to itself (\cite{li2020distance}). RWPE is related to the problem of graph isomorphism and higher-order node interactions. The random walk methodology can be formally defined as shown in \autoref{RW_eq}.
 
-\begin{equation} \label{RW_eq}
-    p_i^{RWPE} = [RW_{ii}, RW_{ii}^2, ..., RW_{ii}^k] \in  \mathbb{R}^k
-\end{equation}
+![RW](pictures/RW.png)
 The $RW$ indicates a random walk function $RW = AD^{-1}$. (\cite{dwivedi2022graph}) differentiates this random walk method from the original proposed previously \cite{li2020distance}, by making use of a lower complexity method by only including the probability of a random-walk landing back on itself ($ii$) as opposed to the probability of a random walk landing on any $j$ node. This method can be used due to there being no sign invariance, something that a Laplacian positional encoding may encounter \cite{dwivedi2020benchmarking}.
 The initialization is done by considering the nearby nodes, we extend upon this idea by including all other cycles up to length $k$, which allows for a more complete representation of the underlying graph structure. 
 
@@ -103,12 +81,7 @@ We evaluate the impact of the random walk initialization by comparing three diff
 
 A sample of this dataset is shown in Figure \ref{fig:zinc_sample} using the NetworkX package.
 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.5\textwidth]{images/graphrep.png}
-    \caption{A sample molecule from the ZINC dataset.}
-    \label{fig:zinc_sample}
-\end{figure}
+![graph_example](pictures/graphrep.png)
 \\
 
 \subsection{Models}
