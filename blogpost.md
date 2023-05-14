@@ -84,13 +84,13 @@ A sample of this dataset is shown in Figure \ref{fig:zinc_sample} using the Netw
 ![graph_example](pictures/graphrep.png)
 \\
 
-\subsection{Models}
-\textbf{MP-GNN.}
+ ## Models
+ ### MP-GNN
 The MP-GNN network makes use of the same setup as defined within the original LSPE paper to deliver a proper comparison between our implementation and that of the original LSPE implementation. Two experiments were conducted, where one mad use of a 10,000 training and 1,000 validation sample of the original ZINC dataset, while the other employed the entirety of the dataset. This network did not make use of the 
 
-\textbf{MP-GNN-PE.}
+ ### MP-GNN-PE
 
-\textbf{MP-GNN-LSPE.}
+ ### MP-GNN-LSPE
 
 # Results
 
