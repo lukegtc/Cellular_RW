@@ -15,7 +15,7 @@ def plot(filename, label):
 
 plot(mpgnn, 'MPGNN')
 plot(pe_mpgnn, 'PE-MPGNN')
-plt.xlabel('Epochs')
+plt.xlabel('Steps')
 plt.ylabel('Validation Loss')
 plt.title('Validation Losses')
 plt.grid()
