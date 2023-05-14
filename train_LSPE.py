@@ -89,7 +89,7 @@ if __name__ == '__main__':
 
     gnn_params = {
         'feat_in': args.feat_in,
-        'pos_in': 1,
+        'pos_in': 20,
         'edge_feat_in': 1,
         'num_hidden': 32,
         'num_layers': 16

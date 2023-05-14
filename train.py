@@ -86,8 +86,8 @@ if __name__ == '__main__':
     args = parse_train_args()
 
     transform = AddRandomWalkPE(walk_length=args.walk_length)
-    data_train = ZINC('datasets/ZINC', split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
-    data_val = ZINC('datasets/ZINC', split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    data_train = ZINC('src/datasets/ZINC', split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    data_val = ZINC('src/datasets/ZINC', split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
 
     train_loader = DataLoader(data_train[:10000], batch_size=32)
     val_loader = DataLoader(data_val[:1000], batch_size=32)
