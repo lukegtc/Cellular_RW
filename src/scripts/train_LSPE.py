@@ -4,10 +4,10 @@ import torch.optim as op
 from torch_geometric.datasets import ZINC
 from torch_geometric.data import DataLoader
 
-from metrics import accuracy_TU
-from transform import AddRandomWalkPE
-from model import MPGNN, MPGNNHead,LSPE_MPGNN
-from config import parse_train_args
+from src.utils.metrics import accuracy_TU
+from src.scripts.transform import AddRandomWalkPE
+from src.model import MPGNN, MPGNNHead,LSPE_MPGNN
+from src.config import parse_train_args
 
 import pytorch_lightning as pl
 import numpy as np

@@ -11,8 +11,8 @@ from torch_geometric.datasets import ZINC
 from torch_geometric.data import DataLoader
 import pytorch_lightning as pl
 
-from metrics import accuracy_TU
-from transform import AddRandomWalkPE
+from src.utils.metrics import accuracy_TU
+from src.scripts.transform import AddRandomWalkPE
 
 class MPGNN(nn.Module):
     def __init__(self, feat_in, edge_feat_in, num_hidden, num_layers):
