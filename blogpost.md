@@ -93,7 +93,9 @@ The MP-GNN network makes use of the same setup as defined within the original LS
  ### MP-GNN-LSPE
 
 # Results
-
+After conducting some small-scale tests based on a sample training set of 10,000 molecules, the resulting validation
+losses are shown below.
+![validation_loss](pictures/Validation_Loss_plot.png)
 # Conclusion
 
 # References
