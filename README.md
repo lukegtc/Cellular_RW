@@ -12,15 +12,17 @@ conda activate lspe_lisa.yml
 ## Experiments
 To run the experiments for basic MP-GNN with PE:
 ```
-python src/train.py 
+python src/scripts/train.py 
 ```
 
 For the MP-GNN-LSPE use:
 ```
-python src/train_LSPE.py 
+python src/scripts/train_LSPE.py 
 ```
 
 ## Repository structure
 In the [`blogpost`](./blogpost.md), background and other details regarding the set up of the experiments and the models can be found.
-[`Model`](./model.py) contains the implementation of a basic MP-GNN, MP-GNN with positional encoding and MP-GNN with learnable positional encoding.
-[`Transform`](./transform.py) contains the modified Random Walk with the inclusion of cycles.
+
+[`Model`](./src/model.py) contains the implementation of a basic MP-GNN, MP-GNN with positional encoding and MP-GNN with learnable positional encoding.
+
+The [`scripts`](./src/scripts) contains the training scripts for the different models and the modified Random Walk initialization with the inclusion of cycles.
