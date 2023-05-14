@@ -6,7 +6,7 @@ from torch_geometric.data import DataLoader
 
 from metrics import accuracy_TU
 from transform import AddRandomWalkPE
-from model import MPGNN, MPGNNHead,LSPE_MPGNN
+from model import LSPE_MPGNN, LSPE_MPGNNHead
 from config import parse_train_args
 
 import pytorch_lightning as pl
@@ -17,35 +17,29 @@ import numpy as np
 # so we will unpack the attributes and make all necessary calls like .float()
 # in the dedicated function extract_gnn_args
 class ZINCModel(nn.Module):
-    def __init__(self, gnn_params, head_params, use_pe=False):
+    def __init__(self, gnn_params, head_params):
         super().__init__()
         self.gnn = LSPE_MPGNN(**gnn_params)
-        self.head = MPGNNHead(**head_params)
-        self.use_pe = use_pe
+        self.head = LSPE_MPGNNHead(**head_params)
 
     def extract_gnn_args(self, graph):
-        h, edge_index, e, batch = graph.x, graph.edge_index, graph.edge_attr, graph.batch
+        h, edge_index, e, batch, p = graph.x, graph.edge_index, graph.edge_attr, graph.batch, graph.pos
         h = h.float()
         e = e.unsqueeze(1).float()
-
-        if self.use_pe:
-            p = graph.random_walk_pe
-            h = torch.cat((h, p), dim=1)
-
-        return h, edge_index, e, batch,p
+        return h, e, p, edge_index, batch
 
     def forward(self, graph):
-        h, edge_index, e, batch,p = self.extract_gnn_args(graph)
-        graph.h,graph.edge_index,graph.e, graph.batch, graph.pos =  h, edge_index, e, batch,p
-        out = self.gnn(graph)
+        h, e, p, edge_index, batch = self.extract_gnn_args(graph)
+        out = self.gnn(h, e, p, edge_index, batch)
         out = self.head(out)
         return out
+
 
 class LitZINCModel(pl.LightningModule):
     def __init__(self, gnn_params, head_params, training_params):
         super().__init__()
         self.save_hyperparameters()
-        self.model = ZINCModel(gnn_params, head_params, training_params['use_pe'])
+        self.model = ZINCModel(gnn_params, head_params)
         self.criterion = nn.L1Loss(reduce='sum')
         self.training_params = training_params
 
@@ -110,7 +104,6 @@ if __name__ == '__main__':
         'lr_decay': 0.5,
         'patience': 25,
         'min_lr': 1e-6,
-        'use_pe': args.use_pe,
     }
 
     model = LitZINCModel(gnn_params, head_params, training_params)

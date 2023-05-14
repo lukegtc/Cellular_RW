@@ -91,9 +91,7 @@ class LSPE_MPGNN(nn.Module):
         self.layers = nn.ModuleList([LSPE_MPGNNLayer(num_hidden) for _ in range(num_layers)])
         self.predict = nn.Linear(2*num_hidden, 1)
 
-    def forward(self, graph):
-        h, edge_index, e, batch, p = graph.x, graph.edge_index, graph.edge_attr, graph.batch, graph.pos
-
+    def forward(self, h, e, p, edge_index, batch):
         h = h.float()
         h = self.h_embed(h)
         # h = self.h_embed(torch.cat(h,p), dim =1)
