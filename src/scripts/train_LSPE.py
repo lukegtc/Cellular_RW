@@ -3,64 +3,69 @@ import torch.nn as nn
 import torch.optim as op
 from torch_geometric.datasets import ZINC
 from torch_geometric.data import DataLoader
+import pytorch_lightning as pl
+import scipy.sparse as sp
 
-from src.utils.metrics import accuracy_TU
+from src.model import LSPE_MPGNN, LSPE_MPGNNHead, LapEigLoss
+
 from src.scripts.transform import AddRandomWalkPE
 from src.model import MPGNN, MPGNNHead,LSPE_MPGNN
 from src.config import parse_train_args
 
-import pytorch_lightning as pl
-import numpy as np
 
-
-# we define model for a given dataset because the attribute names need not be consistent between datasets,
-# so we will unpack the attributes and make all necessary calls like .float()
-# in the dedicated function extract_gnn_args
 class ZINCModel(nn.Module):
-    def __init__(self, gnn_params, head_params, use_pe=False):
+    """
+    We combine here the argument preprocessing, GNN and the head.
+    We should define a separate model for each dataset, because the attribute names need not be consistent between datasets.
+    We unpack the attributes and make all necessary calls like .float() in the dedicated function extract_gnn_args.
+    """
+    def __init__(self, gnn_params, head_params):
         super().__init__()
         self.gnn = LSPE_MPGNN(**gnn_params)
-        self.head = MPGNNHead(**head_params)
-        self.use_pe = use_pe
+        self.head = LSPE_MPGNNHead(**head_params)
 
     def extract_gnn_args(self, graph):
-        h, edge_index, e, batch = graph.x, graph.edge_index, graph.edge_attr, graph.batch
+        h, edge_index, e, batch, p = graph.x, graph.edge_index, graph.edge_attr, graph.batch, graph.random_walk_pe
         h = h.float()
         e = e.unsqueeze(1).float()
-
-        if self.use_pe:
-            p = graph.random_walk_pe
-            h = torch.cat((h, p), dim=1)
-
-        return h, edge_index, e, batch,p
+        return h, e, p, edge_index, batch
 
     def forward(self, graph):
-        h, edge_index, e, batch = self.extract_gnn_args(graph)
-        # graph.h,graph.edge_index,graph.e, graph.batch, graph.pos =  h, edge_index, e, batch,p
-        out = self.gnn(graph)
-        out = self.head(out)
-        return out
+        h, e, p, edge_index, batch = self.extract_gnn_args(graph)
+        h, p = self.gnn(h, e, p, edge_index, batch)
+        out = self.head(h, p, batch)
+        return out, p
+
 
 class LitZINCModel(pl.LightningModule):
     def __init__(self, gnn_params, head_params, training_params):
         super().__init__()
         self.save_hyperparameters()
-        self.model = ZINCModel(gnn_params, head_params, training_params['use_pe'])
-        self.criterion = nn.L1Loss(reduce='sum')
+        self.model = ZINCModel(gnn_params, head_params)
+        self.task_loss = nn.L1Loss(reduce='sum')
+        self.pos_enc_loss = LapEigLoss(frobenius_norm_coeff=1e-1, pos_enc_dim=gnn_params['pos_in'])
+        self.loss_alpha = 1
         self.training_params = training_params
 
     def training_step(self, batch, batch_idx):
         label = batch.y
-        out = self.model(batch)
-        loss = self.criterion(out, label)
+        out, p = self.model(batch)
+        task_loss = self.task_loss(out, label)
+
+        normalized_laplacians = batch.normalized_lap
+        lap = sp.block_diag(normalized_laplacians)
+        lap = torch.from_numpy(lap.todense()).float()
+        lap_eig_loss = self.pos_enc_loss(p, lap, batch.batch)
+
+        loss = task_loss + self.loss_alpha * lap_eig_loss
         self.log("train_loss", loss)
         self.log('lr', self.trainer.optimizers[0].param_groups[0]['lr'])
         return loss
 
     def validation_step(self, batch, batch_idx):
         label = batch.y
-        out = self.model(batch)
-        loss = self.criterion(out, label)
+        out, _ = self.model(batch)
+        loss = self.task_loss(out, label)
         self.log("val_loss", loss)
         return loss
 
@@ -95,7 +100,7 @@ if __name__ == '__main__':
 
     gnn_params = {
         'feat_in': args.feat_in,
-        'pos_in': 20,
+        'pos_in': args.walk_length,
         'edge_feat_in': 1,
         'num_hidden': 32,
         'num_layers': 16
@@ -110,7 +115,6 @@ if __name__ == '__main__':
         'lr_decay': 0.5,
         'patience': 25,
         'min_lr': 1e-6,
-        'use_pe': args.use_pe,
     }
 
     model = LitZINCModel(gnn_params, head_params, training_params)
