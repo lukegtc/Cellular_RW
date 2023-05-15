@@ -1,18 +1,11 @@
 import torch
 import torch.nn as nn
-from torch_geometric.datasets import ZINC
 from torch_geometric.nn import global_add_pool
-from torch_geometric.transforms import AddRandomWalkPE
 from torch_scatter import scatter_add
-import torch
-import torch.nn as nn
-import torch.optim as op
-from torch_geometric.datasets import ZINC
-from torch_geometric.data import DataLoader
-import pytorch_lightning as pl
+from torch_geometric.utils import unbatch
+import scipy.sparse as sp
+import scipy.sparse.linalg as linalg
 
-from metrics import accuracy_TU
-from transform import AddRandomWalkPE
 
 class MPGNN(nn.Module):
     def __init__(self, feat_in, edge_feat_in, num_hidden, num_layers):
@@ -92,19 +85,12 @@ class LSPE_MPGNN(nn.Module):
         self.predict = nn.Linear(2*num_hidden, 1)
 
     def forward(self, h, e, p, edge_index, batch):
-        h = h.float()
         h = self.h_embed(h)
-        # h = self.h_embed(torch.cat(h,p), dim =1)
-        e = e.unsqueeze(1).float()
         e = self.e_embed(e)
-
         p = self.p_embed(p)
 
         for layer in self.layers:
             h, e, p = layer(h, e, p, edge_index)
-
-        h = global_add_pool(h, batch)
-        p = global_add_pool(p, batch)
 
         return h, p
 
@@ -112,7 +98,7 @@ class LSPE_MPGNN(nn.Module):
 class LSPE_MPGNNLayer(nn.Module):
     def __init__(self, num_hidden):
         super().__init__()
-        self.h_message_mlp = nn.Linear(3 * num_hidden, num_hidden)
+        self.h_message_mlp = nn.Linear(5 * num_hidden, num_hidden)
         self.h_update = nn.Linear(2 * num_hidden, num_hidden)
         self.e_update = nn.Linear(3 * num_hidden, num_hidden)
         self.p_update = nn.Linear(2 * num_hidden, num_hidden)
@@ -141,6 +127,38 @@ class LSPE_MPGNNHead(nn.Module):
         super().__init__()
         self.predict = nn.Linear(2*num_hidden, 1)
 
-    def forward(self, h, p):
+    def forward(self, h, p, batch):
+        h = global_add_pool(h, batch)
+        p = global_add_pool(p, batch)
         final_prediction = self.predict(torch.cat((h, p), dim=1))
         return final_prediction.squeeze(1)
+
+
+class LapEigLoss(nn.Module):
+    def __init__(self, frobenius_norm_coeff, pos_enc_dim):
+        super().__init__()
+        self.coeff = frobenius_norm_coeff
+        self.pos_enc_dim = pos_enc_dim
+
+    def forward(self, p, normalized_laplacian, batch):
+        # p is dense
+        # we assume that laplacian is also dense
+        loss1 = torch.trace(p.T @ normalized_laplacian @ p)
+
+        p_unbatched = unbatch(p.detach(), batch)
+        p_block = sp.block_diag(p_unbatched)
+
+        # # Conversion to torch tensor
+        # indices = torch.LongTensor(torch.vstack((p_block.row, p_block.col)))
+        # values = torch.FloatTensor(p_block.data)
+        # shape = p_block.shape
+        #
+        # p_block = torch.sparse_coo_tensor(indices, values, torch.Size(shape))
+
+        PTP_In = p_block.T * p_block - sp.eye(p_block.shape[1])
+        loss2 = torch.tensor(linalg.norm(PTP_In, 'fro') ** 2)
+
+        batch_size = len(p_unbatched)
+        n = normalized_laplacian.shape[0]
+        loss = (loss1 + self.coeff * loss2) / (self.pos_enc_dim * batch_size * n)
+        return loss

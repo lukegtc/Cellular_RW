@@ -3,20 +3,19 @@ import torch.nn as nn
 import torch.optim as op
 from torch_geometric.datasets import ZINC
 from torch_geometric.data import DataLoader
+import pytorch_lightning as pl
 
-from metrics import accuracy_TU
 from transform import AddRandomWalkPE
-from model import MPGNN, MPGNNHead,LSPE_MPGNN
+from model import MPGNN, MPGNNHead
 from config import parse_train_args
 
-import pytorch_lightning as pl
-import numpy as np
 
-
-# we define model for a given dataset because the attribute names need not be consistent between datasets,
-# so we will unpack the attributes and make all necessary calls like .float()
-# in the dedicated function extract_gnn_args
 class ZINCModel(nn.Module):
+    """
+    We combine here the argument preprocessing, GNN and the head.
+    We should define a separate model for each dataset, because the attribute names need not be consistent between datasets.
+    We unpack the attributes and make all necessary calls like .float() in the dedicated function extract_gnn_args.
+    """
     def __init__(self, gnn_params, head_params, use_pe=False):
         super().__init__()
         self.gnn = MPGNN(**gnn_params)

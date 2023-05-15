@@ -53,7 +53,9 @@ class AddRandomWalkPE(BaseTransform):
         row, col = data.edge_index
         N = data.num_nodes
         
-        cycle_indices, num_added_nodes = self.create_graph_index(data)
+        cycle_indices, num_added_nodes, lap = self.compute_graph_stats(data)
+        add_node_attr(data, lap, 'normalized_lap')
+
         combined_indices = torch.hstack([data.edge_index, cycle_indices]).type(data.edge_index.dtype)
 
 
@@ -83,14 +85,18 @@ class AddRandomWalkPE(BaseTransform):
         pe = torch.stack(pe_list, dim=-1)
         pe_nodes = pe[:data.num_nodes, :]
         data = add_node_attr(data, pe_nodes, attr_name=self.attr_name)
+
         return data
 
-    def create_graph_index(self, data):
+    def compute_graph_stats(self, data):
         nx_graph = nx.Graph()
 
         # Add the edges to the NetworkX graph
         for i, j in zip(data.edge_index[0], data.edge_index[1]):
             nx_graph.add_edge(i.item(), j.item())
+
+        # get the normalized laplacian
+        lap = nx.normalized_laplacian_matrix(nx_graph)
 
         cycles = self.get_simple_cycles(nx_graph)
         # largest_cycle = max([len(cycle) for cycle in cycles])
@@ -107,7 +113,7 @@ class AddRandomWalkPE(BaseTransform):
                 second_index.append(i)
             num_added_nodes += 1
         graph_node_index = [first_index, second_index]
-        return(torch.Tensor(graph_node_index),num_added_nodes)
+        return torch.Tensor(graph_node_index), num_added_nodes, lap
 
     def get_simple_cycles(self, graph):
         digraph = graph.to_directed()
