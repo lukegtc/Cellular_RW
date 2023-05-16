@@ -6,47 +6,27 @@ from torch_geometric.utils import unbatch
 import scipy.sparse as sp
 import scipy.sparse.linalg as linalg
 
-from src.utils.metrics import accuracy_TU
-from src.scripts.transform import AddRandomWalkPE
 
 class MPGNN(nn.Module):
+    """ Standard MP-GNN model. """
     def __init__(self, feat_in, edge_feat_in, num_hidden, num_layers):
         super().__init__()
         self.embed = nn.Linear(feat_in, num_hidden)
         self.edge_embed = nn.Linear(edge_feat_in, num_hidden)
         self.layers = nn.ModuleList([MPGNNLayer(num_hidden) for _ in range(num_layers)])
 
-    def forward(self, h, e, edge_index, batch):
+    def forward(self, h, e, edge_index):
         h = self.embed(h)
         e = self.edge_embed(e)
 
         for layer in self.layers:
             h, e = layer(h, e, edge_index)
 
-        h = global_add_pool(h, batch)
-        return h
-
-
-class MPGNN_PE(nn.Module):
-    def __init__(self, feat_in, edge_feat_in, num_hidden, num_layers):
-        super().__init__()
-        self.embed = nn.Linear(feat_in, num_hidden)
-        self.edge_embed = nn.Linear(edge_feat_in, num_hidden)
-        self.layers = nn.ModuleList([MPGNNLayer(num_hidden) for _ in range(num_layers)])
-
-    def forward(self, graph):
-        h, e, edge_index, batch, p = graph.x, graph.edge_attr, graph.edge_index, graph.batch, graph.p
-        h = self.embed(torch.cat(h,p), dim=1)
-        e = self.edge_embed(e)
-
-        for layer in self.layers:
-            h, e = layer(h, e, edge_index)
-
-        h = global_add_pool(h, batch)
         return h
 
 
 class MPGNNLayer(nn.Module):
+    """ Standard MP-GNN layer. """
     def __init__(self, num_hidden):
         super().__init__()
         self.message_mlp = nn.Linear(3 * num_hidden, num_hidden)
@@ -68,16 +48,19 @@ class MPGNNLayer(nn.Module):
 
 
 class MPGNNHead(nn.Module):
+    """ Handles readout and final prediction from standard MP-GNN model. """
     def __init__(self, num_hidden):
         super().__init__()
         self.predict = nn.Linear(num_hidden, 1)
 
-    def forward(self, h):
-        final_prediction = self.predict(h)
+    def forward(self, h, h_batch):
+        graph_reprs = global_add_pool(h, h_batch)
+        final_prediction = self.predict(graph_reprs)
         return final_prediction.squeeze(1)
 
 
 class LSPE_MPGNN(nn.Module):
+    """ MP-GNN model with learnable structural and positional embeddings. """
     def __init__(self, feat_in, pos_in, edge_feat_in, num_hidden, num_layers):
         super().__init__()
         self.h_embed = nn.Linear(feat_in, num_hidden)
@@ -86,7 +69,7 @@ class LSPE_MPGNN(nn.Module):
         self.layers = nn.ModuleList([LSPE_MPGNNLayer(num_hidden) for _ in range(num_layers)])
         self.predict = nn.Linear(2*num_hidden, 1)
 
-    def forward(self, h, e, p, edge_index, batch):
+    def forward(self, h, e, p, edge_index):
         h = self.h_embed(h)
         e = self.e_embed(e)
         p = self.p_embed(p)
@@ -98,6 +81,7 @@ class LSPE_MPGNN(nn.Module):
 
 
 class LSPE_MPGNNLayer(nn.Module):
+    """ MP-GNN layer handling structural and positional embeddings. """
     def __init__(self, num_hidden):
         super().__init__()
         self.h_message_mlp = nn.Linear(5 * num_hidden, num_hidden)
@@ -125,29 +109,32 @@ class LSPE_MPGNNLayer(nn.Module):
 
 
 class LSPE_MPGNNHead(nn.Module):
+    """ Handles readout and final prediction for graph regression task from LSPE-MP-GNN model. """
     def __init__(self, num_hidden):
         super().__init__()
         self.predict = nn.Linear(2*num_hidden, 1)
 
-    def forward(self, h, p, batch):
-        h = global_add_pool(h, batch)
-        p = global_add_pool(p, batch)
-        final_prediction = self.predict(torch.cat((h, p), dim=1))
+    def forward(self, h, p, h_batch):
+        h = global_add_pool(h, h_batch)
+        p = global_add_pool(p, h_batch)  # we can use batch indices for nodes because we have positional encoding for each node
+        graph_reprs = torch.cat((h, p), dim=1)
+        final_prediction = self.predict(graph_reprs, dim=1)
         return final_prediction.squeeze(1)
 
 
 class LapEigLoss(nn.Module):
+    """ One part of loss function for LSPE-MP-GNN model. """
     def __init__(self, frobenius_norm_coeff, pos_enc_dim):
         super().__init__()
         self.coeff = frobenius_norm_coeff
         self.pos_enc_dim = pos_enc_dim
 
-    def forward(self, p, normalized_laplacian, batch):
+    def forward(self, p, normalized_laplacian, p_batch):
         # p is dense
         # we assume that laplacian is also dense
         loss1 = torch.trace(p.T @ normalized_laplacian @ p)
 
-        p_unbatched = unbatch(p.detach(), batch)
+        p_unbatched = unbatch(p.detach(), p_batch)
         p_block = sp.block_diag(p_unbatched)
 
         # # Conversion to torch tensor

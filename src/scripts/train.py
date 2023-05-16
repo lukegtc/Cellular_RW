@@ -31,13 +31,14 @@ class ZINCModel(nn.Module):
             p = graph.random_walk_pe
             h = torch.cat((h, p), dim=1)
 
-        return h, edge_index, e, batch
+        return h, e, edge_index, batch
 
     def forward(self, graph):
-        h, edge_index, e, batch = self.extract_gnn_args(graph)
-        out = self.gnn(h, e, edge_index, batch)
-        out = self.head(out)
+        h, e, edge_index, batch = self.extract_gnn_args(graph)
+        out = self.gnn(h, e, edge_index)
+        out = self.head(out, batch)
         return out
+
 
 class LitZINCModel(pl.LightningModule):
     def __init__(self, gnn_params, head_params, training_params):
