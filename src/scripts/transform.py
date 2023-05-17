@@ -86,6 +86,17 @@ class AddRandomWalkPE(BaseTransform):
         pe_nodes = pe[:data.num_nodes, :]
         data = add_node_attr(data, pe_nodes, attr_name=self.attr_name)
 
+        # add cell features
+        cell_features = self.get_cell_features(data)
+        data = add_node_attr(data, cell_features, attr_name='cell_features')
+        
+        # add boundary index
+        boundary_index = self.boundary_index(data)
+        data = add_node_attr(data, cell_features, attr_name='boundary_index')
+
+        # add upper adjacency idx
+        upper_adj_index = self.upper_adjacency(data)
+        data = add_node_attr(data, upper_adj_index, attr_name='upper_adj_index')
         return data
 
     def compute_graph_stats(self, data):
@@ -114,21 +125,120 @@ class AddRandomWalkPE(BaseTransform):
             num_added_nodes += 1
         graph_node_index = [first_index, second_index]
         return torch.Tensor(graph_node_index), num_added_nodes, lap
+    
+    def make_graph(self, data):
+        nx_graph = nx.Graph()
 
+        # Add the edges to the NetworkX graph
+        for i, j in zip(data.edge_index[0], data.edge_index[1]):
+            nx_graph.add_edge(i.item(), j.item())
+        return nx_graph
+    
     def get_simple_cycles(self, graph):
         digraph = graph.to_directed()
         cycles = [cycle for cycle in nx.simple_cycles(digraph)]
         return cycles
 
     def get_cycle_index(self, graph):
+        # unique cycle_index
         digraph = nx.DiGraph(graph)
         cycles = list(nx.simple_cycles(digraph))
         cycle_index = {}
         node_set = set(graph.nodes())
-        max_node = max(graph.nodes())
+        edge_index = self.get_edge_index(graph)
+        max_node = max(graph.nodes()) + len(edge_index.keys())
 
         for i, cycle in enumerate([c for c in cycles if(len(c)>2)]):
             cycle_nodes = set(cycle)
             assert cycle_nodes <= node_set, "Cycle nodes not in graph"
             cycle_index[max_node+i] = [node for node in cycle]
         return cycle_index
+    
+    def get_edge_index(self, graph):
+        # unique edge_index
+        edge_index = {}
+        max_node = max(graph.nodes())
+        for i, edge in enumerate(graph.edges):
+            i += 1
+            edge_index[max_node+i] = [node for node in edge]
+        return edge_index
+    
+    def boundary_index(self, data):
+        graph = self.make_graph(data)
+        cycle_idx = self.get_cycle_index(graph)
+        edge_idx = self.get_edge_index(graph)
+        first_index, second_index = [], []
+
+        for edge_id, nodes in edge_idx.items():
+            for node in nodes:
+                first_index.append(edge_id)
+                second_index.append(node)
+
+        for cycle_id, edge_list in cycle_idx.items(): 
+            for edge in edge_list:
+                edge_id = next((key for key, value in edge_idx.items() if value == list(edge)), None)
+                if edge_id:
+                    first_index.append(cycle_id)
+                    second_index.append(edge_id)
+        cycle_boundary = [first_index, second_index]
+        return torch.Tensor(cycle_boundary)
+    
+    def upper_adjacency(self, data):
+        nx_graph = nx.Graph()
+
+        # Add the edges to the NetworkX graph
+        for i, j in zip(data.edge_index[0], data.edge_index[1]):
+            nx_graph.add_edge(i.item(), j.item())
+
+        first = []
+        second = []
+        third = []
+        edge_index = self.get_edge_index(nx_graph)
+        cycle_edge_idx = self.get_cycle_edges(nx_graph)
+        for edge_id, edge in edge_index.items():
+                first.append(edge_id)
+                second.append(edge[0])
+                third.append(edge[1])
+
+        for cell_id, edges in cycle_edge_idx.items():
+            for i in range(len(edges) - 1):
+                for j in range(i + 1, len(edges)):
+                    edge_id_1 = next((key for key, value in edge_index.items() if value == list(edges[i])), None)
+                    edge_id_2 = next((key for key, value in edge_index.items() if value == list(edges[j])), None)
+                    if edge_id_1 and edge_id_2:
+                        first.append(edge_id_1)
+                        second.append(edge_id_2)
+                        third.append(cell_id)
+
+        up_adj = [first, second, third]
+        return torch.Tensor(up_adj)
+    
+    def get_cycle_edges(self, graph):
+        # dictionary cycle and edges forming the cycle
+        cycle_bound_idx = {}
+        cycles = self.get_simple_cycles(graph)
+        for j, cycle in enumerate(cycles):
+            for i in range(len(cycle)):
+                current_node = cycle[i]
+                next_node = cycle[(i+1) % len(cycle)] 
+
+                if graph.has_edge(current_node, next_node):
+                    if j in cycle_bound_idx.keys():
+                        cycle_bound_idx[j].append([current_node, next_node])
+                    else:
+                        cycle_bound_idx[j] = [[current_node, next_node]]
+    
+    def get_cell_features(self, data):
+        nx_graph = nx.Graph()
+
+        # Add the edges to the NetworkX graph
+        for i, j in zip(data.edge_index[0], data.edge_index[1]):
+            nx_graph.add_edge(i.item(), j.item())
+
+        idx = self.get_cycle_index(nx_graph)
+        num_cycles = len(idx)
+        cell_features = torch.zeros(num_cycles)
+        for i in range(cell_features.shape[0]):
+            for node in list(idx.values())[i]:
+                cell_features[i] += data.x[node].item()
+        return cell_features
