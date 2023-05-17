@@ -22,7 +22,7 @@ def add_node_attr(data: Data, value: Any,
             data.x = torch.cat([x, value.to(x.device, x.dtype)], dim=-1)
         else:
             data.x = value
-    else:
+    elif attr_name=='cell_index':
         data[attr_name] = value
 
     return data
@@ -44,7 +44,7 @@ class AddRandomWalkPE(BaseTransform):
     def __init__(
         self,
         walk_length: int,
-        attr_name: Optional[str] = 'random_walk_pe',
+        attr_name: Optional[str] = 'random_walk_pe_with_cells',
     ):
         self.walk_length = walk_length
         self.attr_name = attr_name
@@ -55,33 +55,47 @@ class AddRandomWalkPE(BaseTransform):
         
         cycle_indices, num_added_nodes, lap = self.compute_graph_stats(data)
         add_node_attr(data, lap, 'normalized_lap')
-
-        combined_indices = torch.hstack([data.edge_index, cycle_indices]).type(data.edge_index.dtype)
-
-
         value = data.edge_weight
-        if value is None:
-            value = torch.ones(combined_indices.size()[1])
-        else:
-            # Get the value of cycles by averaging the edge weights of the edges in the cycle from cycle indices
-            max_node = max(data.nodes())
-            value = torch.cat([value, torch.mean(value[cycle_indices[0] == max_node + torch.arange(num_added_nodes)])])
 
-        num_combined_nodes = data.num_nodes + num_added_nodes
-        # value = scatter(value, combined_indices[0], dim_size=N, reduce='sum').clamp(min=1)[row]
-        value = scatter(value, combined_indices[0], dim_size=num_combined_nodes, reduce='sum').clamp(min=1)[combined_indices[0]]
+        if self.attr_name == 'random_walk_pe_with_cells':
+
+            all_indices = torch.hstack([data.edge_index, cycle_indices]).type(data.edge_index.dtype)
+
+
+            num_combined_nodes = data.num_nodes + num_added_nodes
+            if value is None:
+                value = torch.ones(all_indices.size()[1])
+            else:
+                # Get the value of cycles by averaging the edge weights of the edges in the cycle from cycle indices
+                max_node = max(data.nodes())
+                value = torch.cat(
+                    [value, torch.mean(value[cycle_indices[0] == max_node + torch.arange(num_added_nodes)])])
+
+        else:
+            all_indices = data.edge_index
+            num_combined_nodes = data.num_nodes
+            if value is None:
+                value = torch.ones(all_indices.size()[1])
+
+
+        # value = scatter(value, all_indices[0], dim_size=N, reduce='sum').clamp(min=1)[row]
+        value = scatter(value, all_indices[0], dim_size=num_combined_nodes, reduce='sum').clamp(min=1)[all_indices[0]]
         value = 1.0 / value
 
         # we used to_torch_csr_tensor before, but it gives Runtime Error if you don't have MKL installed
         # I couldn't install MKL bc it's for Intel processors, so I changed it to COO tensor
         # The sparse tensor is unpacked at every step of the loop, so it should give the same result
-        adj = to_torch_coo_tensor(combined_indices, value, size=(num_combined_nodes,num_combined_nodes))
+        adj = to_torch_coo_tensor(all_indices, value, size=(num_combined_nodes,num_combined_nodes))
 
         out = adj
         pe_list = [get_self_loop_attr(*to_edge_index(out), num_nodes=num_combined_nodes)]
+        # For the 2nd dimension (cycles)
+
         for _ in range(self.walk_length - 1):
             out = out @ adj
             pe_list.append(get_self_loop_attr(*to_edge_index(out), num_nodes=num_combined_nodes))
+
+
         pe = torch.stack(pe_list, dim=-1)
         pe_nodes = pe[:data.num_nodes, :]
         data = add_node_attr(data, pe_nodes, attr_name=self.attr_name)
@@ -98,9 +112,9 @@ class AddRandomWalkPE(BaseTransform):
         # get the normalized laplacian
         lap = nx.normalized_laplacian_matrix(nx_graph)
 
-        cycles = self.get_simple_cycles(nx_graph)
+        # cycles = self.get_simple_cycles(nx_graph)
         # largest_cycle = max([len(cycle) for cycle in cycles])
-        cycles = [cycle for cycle in cycles if len(cycle) > 2]
+        # cycles = [cycle for cycle in cycles if len(cycle) > 2]
         idx = self.get_cycle_index(nx_graph)
 
         first_index, second_index = [], []
@@ -130,5 +144,5 @@ class AddRandomWalkPE(BaseTransform):
         for i, cycle in enumerate([c for c in cycles if(len(c)>2)]):
             cycle_nodes = set(cycle)
             assert cycle_nodes <= node_set, "Cycle nodes not in graph"
-            cycle_index[max_node+i] = [node for node in cycle]
+            cycle_index[max_node+i+1] = [node for node in cycle]
         return cycle_index
