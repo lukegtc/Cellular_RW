@@ -106,7 +106,7 @@ class AddRandomWalkPE(BaseTransform):
         
         # add boundary index
         boundary_index = self.boundary_index(data)
-        data = add_node_attr(data, cell_features, attr_name='boundary_index')
+        data = add_node_attr(data, boundary_index, attr_name='boundary_index')
 
         # add upper adjacency idx
         upper_adj_index = self.upper_adjacency(data)
