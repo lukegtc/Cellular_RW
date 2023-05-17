@@ -165,7 +165,6 @@ class AddRandomWalkPE(BaseTransform):
         for i, cycle in enumerate([c for c in cycles if(len(c)>2)]):
             cycle_nodes = set(cycle)
             assert cycle_nodes <= node_set, "Cycle nodes not in graph"
-<<<<<<< HEAD
             cycle_index[max_node+i] = [node for node in cycle]
         return cycle_index
     
@@ -257,7 +256,3 @@ class AddRandomWalkPE(BaseTransform):
             for node in list(idx.values())[i]:
                 cell_features[i] += data.x[node].item()
         return cell_features
-=======
-            cycle_index[max_node+i+1] = [node for node in cycle]
-        return cycle_index
->>>>>>> 05d8895a44154f0fa4703970b77c31e33e580648
