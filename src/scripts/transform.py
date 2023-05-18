@@ -150,7 +150,7 @@ class AddRandomWalkPE(BaseTransform):
     
     def get_simple_cycles(self, graph):
         digraph = graph.to_directed()
-        cycles = [cycle for cycle in nx.simple_cycles(digraph)]
+        cycles = [cycle for cycle in nx.simple_cycles(digraph) if len(cycle)>2]
         return cycles
 
     def get_cycle_index(self, graph):
@@ -207,14 +207,18 @@ class AddRandomWalkPE(BaseTransform):
         matrix_edge = [[], [], []]  
         edge_index = self.get_edge_index(nx_graph)
         cycle_edge_idx = self.get_cycle_edges(nx_graph)
-        for edge_id, edge in edge_index.items():
+        for edge_id, edge in edge_index.items(): #unique_id for edge id:(node1, node2)
             matrix_edge[0].append(edge[0])  
             matrix_edge[1].append(edge[1])  
             matrix_edge[2].append(edge_id)
 
+            matrix_edge[0].append(edge[1])  
+            matrix_edge[1].append(edge[0])  
+            matrix_edge[2].append(edge_id)
+
         matrix_cycles = [[], [], []]
         # i only consider pair of edges now, they should also be the other way
-        for cell_id, edges in cycle_edge_idx.items():
+        for cell_id, edges in cycle_edge_idx.items(): #cell_id : (edges, edges,..)
             for i in range(len(edges) - 1):
                 for j in range(i + 1, len(edges)):
                     edge_id_1 = next((key for key, value in edge_index.items() if value == list(edges[i])), None)
@@ -224,8 +228,12 @@ class AddRandomWalkPE(BaseTransform):
                         matrix_cycles[1].append(edge_id_2)
                         matrix_cycles[2].append(cell_id)
 
-        up_adj = [matrix_edge, matrix_cycles]
-        return torch.Tensor(up_adj)
+                        matrix_cycles[0].append(edge_id_2)
+                        matrix_cycles[1].append(edge_id_1)
+                        matrix_cycles[2].append(cell_id)
+
+        # up_adj = [matrix_edge, matrix_cycles]
+        return matrix_edge, matrix_cycles
     
     def get_cycle_edges(self, graph):
         # dictionary cycle and edges forming the cycle
