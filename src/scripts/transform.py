@@ -60,7 +60,6 @@ class AddRandomWalkPE(BaseTransform):
         if self.attr_name == 'random_walk_pe_with_cells':
 
             all_indices = torch.hstack([data.edge_index, cycle_indices]).type(data.edge_index.dtype)
-            # combination of nodes + cycles
 
 
             num_combined_nodes = data.num_nodes + num_added_nodes #+ cycle_indices.size(1)
@@ -242,7 +241,6 @@ class AddRandomWalkPE(BaseTransform):
                         cycle_bound_idx[j].append([current_node, next_node])
                     else:
                         cycle_bound_idx[j] = [[current_node, next_node]]
-        return cycle_bound_idx
     
     def get_cell_features(self, data):
         nx_graph = nx.Graph()
