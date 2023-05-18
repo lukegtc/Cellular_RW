@@ -232,8 +232,8 @@ class AddRandomWalkPE(BaseTransform):
                         matrix_cycles[1].append(edge_id_1)
                         matrix_cycles[2].append(cell_id)
 
-        # up_adj = [matrix_edge, matrix_cycles]
-        return matrix_edge, matrix_cycles
+        up_adj = [torch.Tensor(matrix_edge), torch.Tensor(matrix_cycles)]
+        return up_adj
 
 
     def get_cycle_edges(self, graph):
