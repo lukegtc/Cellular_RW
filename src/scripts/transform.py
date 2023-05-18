@@ -160,7 +160,7 @@ class AddRandomWalkPE(BaseTransform):
         cycle_index = {}
         node_set = set(graph.nodes())
         edge_index = self.get_edge_index(graph)
-        max_node = max(graph.nodes()) + len(edge_index.keys())
+        max_node = max(graph.nodes()) # + len(edge_index.keys())
 
         for i, cycle in enumerate([c for c in cycles if(len(c)>2)]):
             cycle_nodes = set(cycle)
