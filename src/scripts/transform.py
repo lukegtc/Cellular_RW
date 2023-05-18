@@ -211,9 +211,9 @@ class AddRandomWalkPE(BaseTransform):
         edge_index = self.get_edge_index(nx_graph)
         cycle_edge_idx = self.get_cycle_edges(nx_graph)
         for edge_id, edge in edge_index.items():
-                first.append(edge_id)
-                second.append(edge[0])
-                third.append(edge[1])
+                first.append(edge[0])
+                second.append(edge[1])
+                third.append(edge_id)
 
         for cell_id, edges in cycle_edge_idx.items():
             for i in range(len(edges) - 1):
