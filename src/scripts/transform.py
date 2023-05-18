@@ -220,9 +220,9 @@ class AddRandomWalkPE(BaseTransform):
                     edge_id_1 = next((key for key, value in edge_index.items() if value == list(edges[i])), None)
                     edge_id_2 = next((key for key, value in edge_index.items() if value == list(edges[j])), None)
                     if edge_id_1 and edge_id_2:
-                        matrix_cycles.append(edge_id_1)
-                        matrix_cycles.append(edge_id_2)
-                        matrix_cycles.append(cell_id)
+                        matrix_cycles[0].append(edge_id_1)
+                        matrix_cycles[1].append(edge_id_2)
+                        matrix_cycles[2].append(cell_id)
 
         up_adj = [matrix_edge, matrix_cycles]
         return torch.Tensor(up_adj)
