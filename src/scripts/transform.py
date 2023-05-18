@@ -165,7 +165,7 @@ class AddRandomWalkPE(BaseTransform):
         for i, cycle in enumerate([c for c in cycles if(len(c)>2)]):
             cycle_nodes = set(cycle)
             assert cycle_nodes <= node_set, "Cycle nodes not in graph"
-            cycle_index[max_node+i] = [node for node in cycle]
+            cycle_index[max_node+i+1] = [node for node in cycle]
         return cycle_index
     
     def get_edge_index(self, graph):
