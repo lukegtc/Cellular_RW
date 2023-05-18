@@ -150,7 +150,8 @@ class AddRandomWalkPE(BaseTransform):
     
     def get_simple_cycles(self, graph):
         digraph = graph.to_directed()
-        cycles = [cycle for cycle in nx.simple_cycles(digraph)]
+        cycles = [cycle for cycle in nx.simple_cycles(digraph) if len(cycle)>2]
+
         return cycles
 
     def get_cycle_index(self, graph):
@@ -223,6 +224,7 @@ class AddRandomWalkPE(BaseTransform):
                         matrix_cycles[0].append(edge_id_1)
                         matrix_cycles[1].append(edge_id_2)
                         matrix_cycles[2].append(cell_id)
+
 
         up_adj = [matrix_edge, matrix_cycles]
         return torch.Tensor(up_adj)
