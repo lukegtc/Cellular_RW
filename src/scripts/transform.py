@@ -204,27 +204,27 @@ class AddRandomWalkPE(BaseTransform):
         for i, j in zip(data.edge_index[0], data.edge_index[1]):
             nx_graph.add_edge(i.item(), j.item())
 
-        first = []
-        second = []
-        third = []
+        matrix_edge = [[], [], []]  
         edge_index = self.get_edge_index(nx_graph)
         cycle_edge_idx = self.get_cycle_edges(nx_graph)
         for edge_id, edge in edge_index.items():
-                first.append(edge[0])
-                second.append(edge[1])
-                third.append(edge_id)
+            matrix_edge[0].append(edge[0])  
+            matrix_edge[1].append(edge[1])  
+            matrix_edge[2].append(edge_id)
 
+        matrix_cycles = [[], [], []]
+        # i only consider pair of edges now, they should also be the other way
         for cell_id, edges in cycle_edge_idx.items():
             for i in range(len(edges) - 1):
                 for j in range(i + 1, len(edges)):
                     edge_id_1 = next((key for key, value in edge_index.items() if value == list(edges[i])), None)
                     edge_id_2 = next((key for key, value in edge_index.items() if value == list(edges[j])), None)
                     if edge_id_1 and edge_id_2:
-                        first.append(edge_id_1)
-                        second.append(edge_id_2)
-                        third.append(cell_id)
+                        matrix_cycles.append(edge_id_1)
+                        matrix_cycles.append(edge_id_2)
+                        matrix_cycles.append(cell_id)
 
-        up_adj = [first, second, third]
+        up_adj = [matrix_edge, matrix_cycles]
         return torch.Tensor(up_adj)
     
     def get_cycle_edges(self, graph):
