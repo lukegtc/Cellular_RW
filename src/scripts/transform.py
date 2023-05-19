@@ -97,10 +97,14 @@ class AddRandomWalkPE(BaseTransform):
 
 
         pe = torch.stack(pe_list, dim=-1)
-        pe_nodes = pe[:data.num_nodes, :]
-        pe_cells = pe[-num_added_nodes:, :]
+        if self.attr_name== 'random_walk_pe_with_cells':
+            pe_cells = pe[-num_added_nodes:, :]
+            data = add_node_attr(data, pe_cells, attr_name=self.attr_name)
+        else:
+            pe_nodes = pe[:data.num_nodes, :]
+            data = add_node_attr(data, pe_nodes, attr_name=self.attr_name)
+
         # data = add_node_attr(data, pe_nodes, attr_name=self.attr_name)
-        data = add_node_attr(data, pe_cells, attr_name=self.attr_name)
 
 
         # add cell features
