@@ -22,7 +22,7 @@ def add_node_attr(data: Data, value: Any,
             data.x = torch.cat([x, value.to(x.device, x.dtype)], dim=-1)
         else:
             data.x = value
-    elif attr_name=='cell_index':
+    else:
         data[attr_name] = value
 
     return data

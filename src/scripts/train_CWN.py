@@ -28,7 +28,7 @@ class ZINCModel(nn.Module):
         cell_features: List[torch.Tensor] = graph.cell_features
         boundary_index: List[torch.Tensor] = graph.boundary_index
         upper_adj_index: List[torch.Tensor] = graph.upper_adj_index
-        cell_batches = graph.cell_batches
+        cell_batches = graph.batch
 
         # should that be here on in transform.py?
         for i in range(len(cell_features)):
@@ -39,9 +39,9 @@ class ZINCModel(nn.Module):
             upper_adj_index[i] = upper_adj_index[i].long()
 
         if self.pe_params['use_pe']:
-            if args.pe_params['use_cells'] == True:
+            if self.pe_params['use_cells'] == True:
                 initial_pos_enc: List[torch.Tensor] = graph.random_walk_pe_with_cells
-            if args.pe_params['use_cells'] == False:
+            if self.pe_params['use_cells'] == False:
                 initial_pos_enc: List[torch.Tensor] = graph.random_walk_pe
             cell_features = [torch.cat((h, p), dim=1) for h, p in zip(cell_features, initial_pos_enc)]
 
