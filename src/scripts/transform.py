@@ -56,7 +56,7 @@ class AddRandomWalkPE(BaseTransform):
         cycle_indices, num_added_nodes, lap = self.compute_graph_stats(data)
         add_node_attr(data, lap, 'normalized_lap')
         value = data.edge_weight
-
+        number_of_cycles = cycle_indices.size(1)
         if self.attr_name == 'random_walk_pe_with_cells':
 
             all_indices = torch.hstack([data.edge_index, cycle_indices]).type(data.edge_index.dtype)
@@ -98,7 +98,10 @@ class AddRandomWalkPE(BaseTransform):
 
         pe = torch.stack(pe_list, dim=-1)
         pe_nodes = pe[:data.num_nodes, :]
-        data = add_node_attr(data, pe_nodes, attr_name=self.attr_name)
+        pe_cells = pe[-num_added_nodes:, :]
+        # data = add_node_attr(data, pe_nodes, attr_name=self.attr_name)
+        data = add_node_attr(data, pe_cells, attr_name=self.attr_name)
+
 
         # add cell features
         cell_features = self.get_cell_features(data)

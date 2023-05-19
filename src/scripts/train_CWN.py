@@ -23,6 +23,7 @@ class ZINCModel(nn.Module):
         self.gnn = CWN(**cwn_params)
         self.head = CWNHead(**head_params)
         self.pe_params = pe_params
+        self.device = cwn_params['device']
 
     def extract_gnn_args(self, graph):
         cell_features: List[torch.Tensor] = graph.cell_features
@@ -43,7 +44,9 @@ class ZINCModel(nn.Module):
                 initial_pos_enc: List[torch.Tensor] = graph.random_walk_pe_with_cells
             if self.pe_params['use_cells'] == False:
                 initial_pos_enc: List[torch.Tensor] = graph.random_walk_pe
-            cell_features = [torch.cat((h, p), dim=1) for h, p in zip(cell_features, initial_pos_enc)]
+            cell_features = cell_features.reshape(-1, 1)
+            cell_features = torch.cat((cell_features, initial_pos_enc), dim=1)
+            # cell_features = [torch.cat((h, p), dim=1) for h, p in zip(cell_features, initial_pos_enc)]
 
         return cell_features, boundary_index, upper_adj_index, cell_batches
 
@@ -114,7 +117,8 @@ if __name__ == '__main__':
         'initial_cell_dims' : [1,1,1],
         # 'edge_feat_in': 1,
         'num_hidden': 32,
-        'num_layers': 16
+        'num_layers': 16,
+        'device': "cuda:0"
     }
 
     head_params = {

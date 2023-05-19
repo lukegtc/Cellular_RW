@@ -12,26 +12,36 @@ class CWN(nn.Module):
     def __init__(self,
                  initial_cell_dims: List[int],
                  num_hidden: int,
-                 num_layers: int):
+                 num_layers: int,
+                 device: torch.device = torch.device("cpu")):
         super().__init__()
-        self.embed = [nn.Linear(cell_in, num_hidden) for cell_in in initial_cell_dims]
+        self.device = device
+        self.embed = [nn.Linear(cell_in, num_hidden).to(self.device) for cell_in in initial_cell_dims]
         self.layers = nn.ModuleList([CWNLayer(num_hidden) for _ in range(num_layers)])
+
+
 
     def forward(self,
                 cell_features: List[torch.Tensor],
                 boundary_index: List[torch.Tensor],
                 upper_adj_index: List[torch.Tensor]):
-        cell_features = [embed_layer(c) for c, embed_layer in zip(cell_features, self.embed)]
+
+        # cell_features = [embed_layer(c) for c, embed_layer in zip(cell_features, self.embed)]
+        cell_features_new = []
+        for c, embed_layer in zip(cell_features, self.embed):
+            c = c.reshape(-1, 1)
+            out = embed_layer(c)
+            cell_features_new.append(out)
 
         cell_dims = []
-        for cell_dim, c in enumerate(cell_features):
+        for cell_dim, c in enumerate(cell_features_new):
             cell_dims.extend([cell_dim] * c.shape[0])
-        cell_dims = torch.tensor(cell_dims, dtype=torch.long, device=cell_features[0].device)
+        cell_dims = torch.tensor(cell_dims, dtype=torch.long, device=cell_features_new[0].device)
 
         for layer in self.layers:
-            cell_features = layer(cell_features, cell_dims, boundary_index, upper_adj_index)
+            cell_features_new = layer(cell_features_new, cell_dims, boundary_index, upper_adj_index)
 
-        return cell_features
+        return cell_features_new
 
 
 class CWNLayer(nn.Module):
@@ -48,7 +58,7 @@ class CWNLayer(nn.Module):
                 boundary_index: List[torch.Tensor],
                 upper_adj_index: List[torch.Tensor]):
         try:
-            assert len(cell_features) != 3
+            assert len(cell_features) == 3
             assert len(boundary_index) == 2
             assert len(upper_adj_index) == 2
             node_features, edge_features, cycle_features = cell_features
@@ -69,7 +79,7 @@ class CWNLayer(nn.Module):
         # upper adj
         rec, send, common = upper_adj_index[0]
         messages = torch.cat((node_features[rec], node_features[send], edge_features[common]), dim=1)
-        node_upper_adj_messages = self.upper_adj_message_mlp(messages, dim=1)
+        node_upper_adj_messages = self.upper_adj_message_mlp(messages).to(node_features.device)
         node_upper_adj_messages = scatter_add(node_upper_adj_messages, rec, dim=0, dim_size=node_features.shape[0])
 
         # prepare row for update transform
