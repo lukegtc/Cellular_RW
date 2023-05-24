@@ -10,38 +10,31 @@ from typing import List
 class CWN(nn.Module):
     """ CW network model. """
     def __init__(self,
-                 initial_cell_dims: List[int],
+                 num_cells: int,
                  num_hidden: int,
-                 num_layers: int,
-                 device: torch.device = torch.device("cpu")):
+                 num_layers: int):
         super().__init__()
-        self.device = device
-        self.embed = [nn.Linear(cell_in, num_hidden).to(self.device) for cell_in in initial_cell_dims]
+        self.embed = nn.Linear(num_cells, num_hidden)
         self.layers = nn.ModuleList([CWNLayer(num_hidden) for _ in range(num_layers)])
 
-
-
     def forward(self,
-                cell_features: List[torch.Tensor],
+                cell_features: torch.Tensor,
+                cell_dim_batch: torch.Tensor,
                 boundary_index: List[torch.Tensor],
                 upper_adj_index: List[torch.Tensor]):
 
-        # cell_features = [embed_layer(c) for c, embed_layer in zip(cell_features, self.embed)]
-        cell_features_new = []
-        for c, embed_layer in zip(cell_features, self.embed):
-            c = c.reshape(-1, 1)
-            out = embed_layer(c)
-            cell_features_new.append(out)
-
-        cell_dims = []
-        for cell_dim, c in enumerate(cell_features_new):
-            cell_dims.extend([cell_dim] * c.shape[0])
-        cell_dims = torch.tensor(cell_dims, dtype=torch.long, device=cell_features_new[0].device)
+        cell_features = unbatch(cell_features, cell_dim_batch)
+        cell_features = [embed_layer(c) for c, embed_layer in zip(cell_features, self.embed)]
+        # cell_features_new = []
+        # for c, embed_layer in zip(cell_features, self.embed):
+        #     c = c.reshape(-1, 1)
+        #     out = embed_layer(c)
+        #     cell_features_new.append(out)
 
         for layer in self.layers:
-            cell_features_new = layer(cell_features_new, cell_dims, boundary_index, upper_adj_index)
+            cell_features = layer(cell_features, cell_dim_batch, boundary_index, upper_adj_index)
 
-        return cell_features_new
+        return cell_features
 
 
 class CWNLayer(nn.Module):
@@ -53,12 +46,12 @@ class CWNLayer(nn.Module):
         self.h_update = nn.Linear(3 * num_hidden, num_hidden)
 
     def forward(self,
-                cell_features: List[torch.Tensor],
-                cell_dims: torch.Tensor,
+                cell_features: torch.Tensor,
+                cell_dim_batch: torch.Tensor,
                 boundary_index: List[torch.Tensor],
                 upper_adj_index: List[torch.Tensor]):
         try:
-            assert len(cell_features) == 3
+            assert len(cell_dim_batch.unique()) == 3
             assert len(boundary_index) == 2
             assert len(upper_adj_index) == 2
             node_features, edge_features, cycle_features = cell_features
@@ -117,8 +110,7 @@ class CWNLayer(nn.Module):
 
         # --- update ---
         update_rows = torch.cat(update_rows, dim=0)
-        cell_features_batched = self.h_update(update_rows)
-        cell_features = unbatch(cell_features_batched, cell_dims)
+        cell_features = self.h_update(update_rows)
         return cell_features
 
 
@@ -130,9 +122,44 @@ class CWNHead(nn.Module):
 
     def forward(self,
                 cell_features: List[torch.Tensor],
-                cell_batches: List[torch.Tensor]):
+                cell_batch: List[torch.Tensor]):
         all_cell_features = torch.cat(cell_features, dim=0)
         all_cell_batches = torch.cat(cell_batches, dim=0)
-        graph_reprs = global_add_pool(all_cell_features, all_cell_batches)
+        graph_reprs = global_add_pool(cell_features, cell_batch)
         final_prediction = self.predict(graph_reprs)
         return final_prediction.squeeze(1)
+
+class CIN(nn.Module):
+    """ CIN model. """
+    def __init__(self,
+                 initial_cell_dims: List[int],
+                 num_hidden: int,
+                 num_layers: int):
+        super().__init__()
+        self.embed = [nn.Linear(cell_in, num_hidden).to(self.device) for cell_in in initial_cell_dims]
+        self.layers = nn.ModuleList([CWNLayer(num_hidden) for _ in range(num_layers)])
+
+    def forward(self,
+                cell_features: List[torch.Tensor],
+                boundary_index: List[torch.Tensor],
+                upper_adj_index: List[torch.Tensor]):
+
+        cell_features = [embed_layer(c) for c, embed_layer in zip(cell_features, self.embed)]
+        # cell_features_new = []
+        # for c, embed_layer in zip(cell_features, self.embed):
+        #     c = c.reshape(-1, 1)
+        #     out = embed_layer(c)
+        #     cell_features_new.append(out)
+
+        cell_dims = []
+        for cell_dim, c in enumerate(cell_features):
+            cell_dims.extend([cell_dim] * c.shape[0])
+        cell_dims = torch.tensor(cell_dims, dtype=torch.long, device=cell_features[0].device)
+
+        for layer in self.layers:
+            cell_features = layer(cell_features, cell_dims, boundary_index, upper_adj_index)
+
+        return cell_features
+
+
+

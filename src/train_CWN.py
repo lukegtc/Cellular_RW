@@ -5,46 +5,67 @@ from torch_geometric.datasets import ZINC
 from torch_geometric.data import DataLoader
 import pytorch_lightning as pl
 
-from transform import AddRandomWalkPE
-from src.model import MPGNN, MPGNNHead
+from src.pe import AddCellularRandomWalkPE
+from src.models.model_cwn import CWN, CWNHead
 from src.config import parse_train_args
+
+from typing import List
 
 
 class ZINCModel(nn.Module):
     """
-    We combine here the argument preprocessing, GNN and the head.
+    We combine here the argument preprocessing, CWN and the head.
     We should define a separate model for each dataset, because the attribute names need not be consistent between datasets.
     We unpack the attributes and make all necessary calls like .float() in the dedicated function extract_gnn_args.
     """
-    def __init__(self, gnn_params, head_params, use_pe=False):
+    def __init__(self, cwn_params, head_params, use_pe=False, pe_max_cell_dim=None):
         super().__init__()
-        self.gnn = MPGNN(**gnn_params)
-        self.head = MPGNNHead(**head_params)
+        self.cwn = CWN(**cwn_params)
+        self.head = CWNHead(**head_params)
         self.use_pe = use_pe
+        self.pe_max_cell_dim = pe_max_cell_dim if pe_max_cell_dim is not None else -1
 
     def extract_gnn_args(self, graph):
-        h, edge_index, e, batch = graph.x, graph.edge_index, graph.edge_attr, graph.batch
-        h = h.float()
-        e = e.unsqueeze(1).float()
+        cell_features: torch.Tensor = graph.cell_features
+        boundary_index: List[torch.Tensor] = graph.boundary_index
+        upper_adj_index: List[torch.Tensor] = graph.upper_adj_index
+        cell_batch: torch.Tensor = graph.cell_batch
+
+        cell_features = cell_features.float()
+        boundary_index = [b.long() for b in boundary_index]
+        upper_adj_index = [u.long() for u in upper_adj_index]
+
+        # if self.pe_params['use_pe']:
+        #     if self.pe_params['use_cells']:
+        #         initial_pos_enc: List[torch.Tensor] = graph.random_walk_pe_with_cells
+        #     else:
+        #         initial_pos_enc: List[torch.Tensor] = graph.random_walk_pe
+        #     cell_features = cell_features.reshape(-1, 1)
+        #     cell_features = torch.cat((cell_features, initial_pos_enc), dim=1)
+        #     # cell_features = [torch.cat((h, p), dim=1) for h, p in zip(cell_features, initial_pos_enc)]
 
         if self.use_pe:
-            p = graph.random_walk_pe
-            h = torch.cat((h, p), dim=1)
+            pe_max_cell_dim = len(cell_features)
+            if self.pe_max_cell_dim > 0:
+                pe_max_cell_dim = self.pe_max_cell_dim + 1
+            pe = graph.random_walk_pe
+            for i in range(pe_max_cell_dim):
+                cell_features[i] = torch.cat((cell_features[i], pe[i]), dim=1)
 
-        return h, e, edge_index, batch
+        return cell_features, boundary_index, upper_adj_index, cell_batch
 
     def forward(self, graph):
-        h, e, edge_index, batch = self.extract_gnn_args(graph)
-        out = self.gnn(h, e, edge_index)
-        out = self.head(out, batch)
+        cell_features, boundary_index, upper_adj_index, cell_batch = self.extract_gnn_args(graph)
+        cell_features = self.cwn(cell_features, boundary_index, upper_adj_index)
+        out = self.head(cell_features, cell_batch)
         return out
 
 
 class LitZINCModel(pl.LightningModule):
-    def __init__(self, gnn_params, head_params, training_params):
+    def __init__(self, cwn_params, head_params, training_params, pe_params):
         super().__init__()
         self.save_hyperparameters()
-        self.model = ZINCModel(gnn_params, head_params, training_params['use_pe'])
+        self.model = ZINCModel(cwn_params, head_params, **pe_params)
         self.criterion = nn.L1Loss(reduce='sum')
         self.training_params = training_params
 
@@ -86,32 +107,35 @@ if __name__ == '__main__':
     args = parse_train_args()
 
     transform = AddRandomWalkPE(walk_length=args.walk_length)
-    data_train = ZINC('src/datasets/ZINC', split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
-    data_val = ZINC('src/datasets/ZINC', split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    data_train = ZINC(args.zinc_path, subset=args.subset, split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    data_val = ZINC(args.zinc_path, subset=args.subset, split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
 
     train_loader = DataLoader(data_train[:10000], batch_size=32)
     val_loader = DataLoader(data_val[:1000], batch_size=32)
 
     gnn_params = {
-        'feat_in': args.feat_in,
-        'edge_feat_in': 1,
+        'initial_cell_dims': [1, 1, 1],
         'num_hidden': 32,
-        'num_layers': 16
+        'num_layers': 16,
     }
 
     head_params = {
         'num_hidden': 32,
     }
 
+    pe_params = {
+        'use_pe': False,
+        'pe_max_cell_dim': None
+    }
+
     training_params = {
         'lr': 1e-3,
         'lr_decay': 0.5,
         'patience': 25,
-        'min_lr': 1e-6,
-        'use_pe': args.use_pe,
+        'min_lr': 1e-6
     }
 
-    model = LitZINCModel(gnn_params, head_params, training_params)
+    model = LitZINCModel(gnn_params, head_params, training_params, pe_params)
 
     trainer = pl.Trainer(max_epochs=args.max_epochs,
                          accelerator=args.accelerator,

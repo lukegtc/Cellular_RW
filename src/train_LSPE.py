@@ -6,9 +6,10 @@ from torch_geometric.data import DataLoader
 import pytorch_lightning as pl
 import scipy.sparse as sp
 
-from src.model import LSPE_MPGNN, LSPE_MPGNNHead, LapEigLoss
-from src.scripts.transform import AddRandomWalkPE
-from src.config import parse_train_args
+from models.model import LSPE_MPGNN, LSPE_MPGNNHead, LapEigLoss
+
+from pe import AddRandomWalkPE
+from config import parse_train_args
 
 
 class ZINCModel(nn.Module):
@@ -48,7 +49,6 @@ class LitZINCModel(pl.LightningModule):
 
         self.pos_enc_loss = LapEigLoss(frobenius_norm_coeff=self.training_params['lspe_lambda'],
                                        pos_enc_dim=self.gnn_params['pos_in'])
-
 
     def training_step(self, batch, batch_idx):
         label = batch.y

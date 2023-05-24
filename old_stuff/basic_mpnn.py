@@ -2,10 +2,11 @@ import torch
 import torch.nn as nn
 import torch.optim as op
 from torch_geometric.nn import global_add_pool
-from torch_geometric.datasets import QM9, ZINC
+from torch_geometric.datasets import ZINC
 from torch_geometric.data import DataLoader
 from torch_scatter import scatter_add
-from src.scripts.transform import AddRandomWalkPE
+
+
 # from torch_geometric.transforms import AddRandomWalkPE
 
 
