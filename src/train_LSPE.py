@@ -6,9 +6,9 @@ from torch_geometric.data import DataLoader
 import pytorch_lightning as pl
 import scipy.sparse as sp
 
-from models.model import LSPE_MPGNN, LSPE_MPGNNHead, LapEigLoss
+from models.mpgnn import LSPE_MPGNN, LSPE_MPGNNHead, LapEigLoss
 
-from pe import AddRandomWalkPE
+from src.topology.pe import AddRandomWalkPE
 from config import parse_train_args
 
 

@@ -5,8 +5,7 @@ from torch_geometric.datasets import ZINC
 from torch_geometric.data import DataLoader
 import pytorch_lightning as pl
 
-from src.pe import AddCellularRandomWalkPE
-from src.models.model_cwn import CWN, CWNHead
+from src.models.cwn import CWN, CWNHead
 from src.config import parse_train_args
 
 from typing import List

@@ -23,6 +23,6 @@ python src/train_LSPE.py
 ## Repository structure
 In the [`blogpost`](./blogpost.md), background and other details regarding the set up of the experiments and the models can be found.
 
-[`Model`](src/models/model.py) contains the implementation of a basic MP-GNN, MP-GNN with positional encoding and MP-GNN with learnable positional encoding.
+[`Model`](src/models/mpgnn.py) contains the implementation of a basic MP-GNN, MP-GNN with positional encoding and MP-GNN with learnable positional encoding.
 
 The [`scripts`](./src/scripts) contains the training scripts for the different models and the modified Random Walk initialization with the inclusion of cycles.

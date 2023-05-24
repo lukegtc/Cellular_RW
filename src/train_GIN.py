@@ -6,51 +6,28 @@ from torch_geometric.data import DataLoader
 import pytorch_lightning as pl
 
 from src.topology.pe import AddRandomWalkPE
-from src.models.mpgnn import MPGNN, MPGNNHead
+from src.models.gin import GIN
+from src.models.mpgnn import MPGNNHead
 from src.config import parse_train_args
 
 
-class ZINCModel(nn.Module):
-    """
-    We combine here the argument preprocessing, GNN and the head.
-    We should define a separate model for each dataset, because the attribute names need not be consistent between datasets.
-    We unpack the attributes and make all necessary calls like .float() in the dedicated function extract_gnn_args.
-    """
-    def __init__(self, gnn_params, head_params, use_pe=False):
-        super().__init__()
-        self.gnn = MPGNN(**gnn_params)
-        self.head = MPGNNHead(**head_params)
-        self.use_pe = use_pe
-
-    def extract_gnn_args(self, graph):
-        h, edge_index, e, batch = graph.x, graph.edge_index, graph.edge_attr, graph.batch
-        h = h.float()
-        e = e.unsqueeze(1).float()
-
-        if self.use_pe:
-            p = graph.random_walk_pe
-            h = torch.cat((h, p), dim=1)
-
-        return h, e, edge_index, batch
-
-    def forward(self, graph):
-        h, e, edge_index, batch = self.extract_gnn_args(graph)
-        out = self.gnn(h, e, edge_index)
-        out = self.head(out, batch)
-        return out
-
-
-class LitZINCModel(pl.LightningModule):
-    def __init__(self, gnn_params, head_params, training_params):
+class LitGINModel(pl.LightningModule):
+    def __init__(self, gin_params, head_params, training_params):
         super().__init__()
         self.save_hyperparameters()
-        self.model = ZINCModel(gnn_params, head_params, training_params['use_pe'])
+        self.gnn = GIN(**gin_params)
+        self.head = MPGNNHead(**head_params)
         self.criterion = nn.L1Loss(reduce='sum')
         self.training_params = training_params
 
     def training_step(self, batch, batch_idx):
+
+        h, edge_index = batch.x, batch.edge_index
+        h = h.float()
+        out = self.gnn(h, edge_index)
+        out = self.head(out, batch.batch)
+
         label = batch.y
-        out = self.model(batch)
         loss = self.criterion(out, label)
         self.log("train_loss", loss)
         self.log('lr', self.trainer.optimizers[0].param_groups[0]['lr'])
@@ -111,7 +88,7 @@ if __name__ == '__main__':
         'use_pe': args.use_pe,
     }
 
-    model = LitZINCModel(gnn_params, head_params, training_params)
+    model = LitGINModel(gnn_params, head_params, training_params)
 
     trainer = pl.Trainer(max_epochs=args.max_epochs,
                          accelerator=args.accelerator,

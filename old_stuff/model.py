@@ -5,7 +5,7 @@ from torch_geometric.nn import global_add_pool
 from torch_geometric.datasets import ZINC
 from torch_geometric.data import DataLoader
 from torch_scatter import scatter_add
-from src.pe.transform import AddRandomWalkPE
+from src.topology.pe import AddRandomWalkPE
 # from torch_geometric.transforms import AddRandomWalkPE
 
 
