@@ -31,7 +31,8 @@ class GINLayer(nn.Module):
     def forward(self, h, edge_index):
         send, rec = edge_index
 
-        h_messages = h
+        # h_messages = h
+        h_messages = h[send]
         h_messages_agg = scatter_add(h_messages, rec, dim=0, dim_size=h.shape[0])
         h = self.h_update(h + h_messages_agg)
 

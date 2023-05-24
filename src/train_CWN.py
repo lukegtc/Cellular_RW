@@ -10,6 +10,8 @@ from src.config import parse_train_args
 
 from typing import List
 
+from src.topology.pe import AddCellularRandomWalkPE
+
 
 class ZINCModel(nn.Module):
     """
@@ -105,7 +107,7 @@ class LitZINCModel(pl.LightningModule):
 if __name__ == '__main__':
     args = parse_train_args()
 
-    transform = AddRandomWalkPE(walk_length=args.walk_length)
+    transform = AddCellularRandomWalkPE(walk_length=args.walk_length)
     data_train = ZINC(args.zinc_path, subset=args.subset, split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
     data_val = ZINC(args.zinc_path, subset=args.subset, split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
 

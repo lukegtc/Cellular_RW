@@ -18,6 +18,10 @@ class AddRandomWalkPE(BaseTransform):
         self.attr_name = 'random_walk_pe' if attr_name is None else attr_name
 
     def __call__(self, data: Data) -> Data:
+        if data.edge_weight is None:
+            data.edge_weight = torch.ones(data.edge_index.size(1), dtype=torch.float32,
+                                          device=data.edge_index.device)
+
         adj = self.compute_rw_matrix(data.edge_index, data.edge_weight)
         out = adj
         pe_list = [get_self_loop_attr(*to_edge_index(out), num_nodes=data.num_nodes)]
@@ -126,15 +130,18 @@ class AppendCCRWPE(BaseTransform):
     def __init__(self,
                  cell_features_name: str = 'cell_features',
                  pe_name: str = 'cc_random_walk_pe',
-                 cell_ids: Optional[torch.Tensor] = None,
+                 cell_ids: Optional[torch.Tensor] = None, #Specifices which cells to add the PE to the cell features
                  ):
         self.pe_name = pe_name
         self.cell_features_name = cell_features_name
         self.cell_ids = cell_ids
-
+#TODO: Cast down cell features to node features
+    #Copy node features to x attribute in graph
     def __call__(self, data):
         cf = data[self.cell_features_name]
         pe = data[self.pe_name]
+
+        # data['x'] = cf
         if self.cell_ids is not None:
             cf = cf[self.cell_ids]
             pe = pe[self.cell_ids]

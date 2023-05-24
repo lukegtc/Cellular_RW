@@ -3,9 +3,11 @@ import torch.nn as nn
 import torch.optim as op
 from torch_geometric.datasets import ZINC
 from torch_geometric.data import DataLoader
+from torch_geometric.transforms import Compose
 import pytorch_lightning as pl
 
-from src.topology.pe import AddRandomWalkPE
+from src.topology.cellular import LiftGraphToCC
+from src.topology.pe import AddRandomWalkPE, AddCellularRandomWalkPE, AppendCCRWPE, AppendRWPE
 from src.models.gin import GIN
 from src.models.mpgnn import MPGNNHead
 from src.config import parse_train_args
@@ -34,8 +36,13 @@ class LitGINModel(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
+
+        h, edge_index = batch.x, batch.edge_index
+        h = h.float()
+        out = self.gnn(h, edge_index)
+        out = self.head(out, batch.batch)
+
         label = batch.y
-        out = self.model(batch)
         loss = self.criterion(out, label)
         self.log("val_loss", loss)
         return loss
@@ -61,17 +68,19 @@ class LitGINModel(pl.LightningModule):
 
 if __name__ == '__main__':
     args = parse_train_args()
+    #TODO: Add edge weight init
 
-    transform = AddRandomWalkPE(walk_length=args.walk_length)
-    data_train = ZINC('src/datasets/ZINC', split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
-    data_val = ZINC('src/datasets/ZINC', split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    transform = Compose([AddRandomWalkPE(walk_length=args.walk_length), AppendRWPE()])
+    # transform = Compose([LiftGraphToCC(),AddCellularRandomWalkPE(walk_length=args.walk_length, max_cell_dim=args.pe_max_cell_dim), AppendCCRWPE()])
+    data_train = ZINC('src/datasets/ZINC',subset=True, split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    data_val = ZINC('src/datasets/ZINC',subset=True, split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
 
     train_loader = DataLoader(data_train[:10000], batch_size=32)
     val_loader = DataLoader(data_val[:1000], batch_size=32)
 
     gnn_params = {
         'feat_in': args.feat_in,
-        'edge_feat_in': 1,
+        # 'edge_feat_in': 1,
         'num_hidden': 32,
         'num_layers': 16
     }

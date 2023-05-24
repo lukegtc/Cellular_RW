@@ -124,7 +124,7 @@ class CWNHead(nn.Module):
                 cell_features: List[torch.Tensor],
                 cell_batch: List[torch.Tensor]):
         all_cell_features = torch.cat(cell_features, dim=0)
-        all_cell_batches = torch.cat(cell_batches, dim=0)
+        all_cell_batches = torch.cat(cell_batch, dim=0)
         graph_reprs = global_add_pool(cell_features, cell_batch)
         final_prediction = self.predict(graph_reprs)
         return final_prediction.squeeze(1)
