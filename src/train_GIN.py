@@ -68,33 +68,49 @@ class LitGINModel(pl.LightningModule):
 
 if __name__ == '__main__':
     args = parse_train_args()
-    #TODO: Add edge weight init
 
-    transform = Compose([AddRandomWalkPE(walk_length=args.walk_length), AppendRWPE()])
-    # transform = Compose([LiftGraphToCC(),AddCellularRandomWalkPE(walk_length=args.walk_length, max_cell_dim=args.pe_max_cell_dim), AppendCCRWPE()])
-    data_train = ZINC('src/datasets/ZINC',subset=True, split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
-    data_val = ZINC('src/datasets/ZINC',subset=True, split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    # GIN does not use edge features, so we don't need to create any feature initialization transform.
+    transform = None
+    if args.use_pe is not None:
+        if args.use_pe == 'rw':
+            transform = Compose([
+                AddRandomWalkPE(walk_length=args.walk_length),
+                AppendRWPE()
+            ])
+        elif args.use_pe == 'ccrw':
+            transform = Compose([
+                LiftGraphToCC(),
+                AddCellularRandomWalkPE(walk_length=args.walk_length),
+                AppendCCRWPE(use_node_features=True)
+            ])
+        else:
+            raise ValueError('Invalid PE type')
 
-    train_loader = DataLoader(data_train[:10000], batch_size=32)
-    val_loader = DataLoader(data_val[:1000], batch_size=32)
+    data_train = ZINC(args.zinc_folder, subset=True, split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    data_val = ZINC(args.zinc_folder, subset=True, split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+
+    train_loader = DataLoader(data_train, batch_size=128)
+    val_loader = DataLoader(data_val, batch_size=128)
+
+    gnn_in_features = args.feat_in
+    if args.use_pe is not None:
+        gnn_in_features += args.walk_length
 
     gnn_params = {
-        'feat_in': args.feat_in,
-        # 'edge_feat_in': 1,
-        'num_hidden': 32,
-        'num_layers': 16
+        'feat_in': gnn_in_features,
+        'num_hidden': 128,
+        'num_layers': 4
     }
 
     head_params = {
-        'num_hidden': 32,
+        'num_hidden': 128,
     }
 
     training_params = {
         'lr': 1e-3,
         'lr_decay': 0.5,
-        'patience': 25,
-        'min_lr': 1e-6,
-        'use_pe': args.use_pe,
+        'patience': 20,
+        'min_lr': 1e-5
     }
 
     model = LitGINModel(gnn_params, head_params, training_params)
