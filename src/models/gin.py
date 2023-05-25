@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 from torch_scatter import scatter_add
 
@@ -17,6 +18,8 @@ class GIN(nn.Module):
         for layer in self.layers:
             out = layer(h, edge_index)
             out = nn.functional.relu(self.bn(out))
+            out = layer(out, edge_index)
+            out = self.bn(out)
             h = out
 
         return h
