@@ -98,10 +98,10 @@ if __name__ == '__main__':
         else:
             raise ValueError('Invalid PE type')
 
-    data_train = ZINC(f'{args.zinc_folder}_w_PE', subset=True, split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
-    data_val = ZINC(f'{args.zinc_folder}_w_PE', subset=True, split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
-    data_test = ZINC(f'{args.zinc_folder}_w_PE', subset=True, split='test', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
-    param_lol = 32
+    data_train = ZINC(f'{args.zinc_folder}_No_PE', subset=True, split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    data_val = ZINC(f'{args.zinc_folder}_No_PE', subset=True, split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    data_test = ZINC(f'{args.zinc_folder}_No_PE', subset=True, split='test', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    param_lol = 128
 
     train_loader = DataLoader(data_train, batch_size=param_lol)
     val_loader = DataLoader(data_val, batch_size=param_lol)

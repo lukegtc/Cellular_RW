@@ -49,13 +49,10 @@ class GINHead(nn.Module):
         super().__init__()
         self.predict = nn.Linear(num_hidden, 1)
         self.hidden = nn.Linear(num_hidden, num_hidden)
-        self.hidden_2 = nn.Linear(num_hidden, num_hidden)
 
     def forward(self, h, h_batch):
         graph_reprs = global_add_pool(h, h_batch)
         graph_reprs = self.hidden(graph_reprs)
-        graph_reprs = nn.functional.relu(graph_reprs)
-        graph_reprs = self.hidden_2(graph_reprs)
         graph_reprs = nn.functional.relu(graph_reprs)
         final_prediction = self.predict(graph_reprs)
         return final_prediction.squeeze(1)
