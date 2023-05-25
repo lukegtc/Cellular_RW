@@ -8,7 +8,7 @@ import pytorch_lightning as pl
 
 from src.topology.cellular import LiftGraphToCC
 from src.topology.pe import AddRandomWalkPE, AddCellularRandomWalkPE, AppendCCRWPE, AppendRWPE
-from src.models.gin import GIN
+from src.models.gin import GIN, GINHead
 from src.models.mpgnn import MPGNNHead
 from src.config import parse_train_args
 
@@ -18,7 +18,7 @@ class LitGINModel(pl.LightningModule):
         super().__init__()
         self.save_hyperparameters()
         self.gnn = GIN(**gin_params)
-        self.head = MPGNNHead(**head_params)
+        self.head = GINHead(**head_params)
         self.criterion = nn.L1Loss(reduce='sum')
         self.training_params = training_params
 
@@ -47,6 +47,18 @@ class LitGINModel(pl.LightningModule):
         self.log("val_loss", loss)
         return loss
 
+    def test_step(self, batch, batch_idx):
+
+        h, edge_index = batch.x, batch.edge_index
+        h = h.float()
+        out = self.gnn(h, edge_index)
+        out = self.head(out, batch.batch)
+
+        label = batch.y
+        loss = self.criterion(out, label)
+        self.log("test_loss", loss)
+        return loss
+
     def on_validation_epoch_end(self) -> None:
         if self.trainer.sanity_checking:
             return
@@ -59,7 +71,7 @@ class LitGINModel(pl.LightningModule):
         print(f'Current val loss {val_loss}')
 
     def configure_optimizers(self):
-        optimizer = op.Adam(model.parameters(), lr=self.training_params['lr'])
+        optimizer = op.Adam(self.parameters(), lr=self.training_params['lr'])
         scheduler = op.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=self.training_params['lr_decay'],
                                                       patience=self.training_params['patience'],
                                                       min_lr=self.training_params['min_lr'])
@@ -86,13 +98,14 @@ if __name__ == '__main__':
         else:
             raise ValueError('Invalid PE type')
 
-    data_train = ZINC(args.zinc_folder, subset=False, split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
-    data_val = ZINC(args.zinc_folder, subset=False, split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
-    param_lol = 128
+    data_train = ZINC(f'{args.zinc_folder}_w_PE', subset=True, split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    data_val = ZINC(f'{args.zinc_folder}_w_PE', subset=True, split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    data_test = ZINC(f'{args.zinc_folder}_w_PE', subset=True, split='test', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    param_lol = 32
 
     train_loader = DataLoader(data_train, batch_size=param_lol)
     val_loader = DataLoader(data_val, batch_size=param_lol)
-
+    test_loader = DataLoader(data_test, batch_size=param_lol)
     gnn_in_features = args.feat_in
     if args.use_pe is not None:
         gnn_in_features += args.walk_length
@@ -122,3 +135,7 @@ if __name__ == '__main__':
                          log_every_n_steps=10,
                          default_root_dir=args.trainer_root_dir)
     trainer.fit(model, train_loader, val_loader, ckpt_path=args.ckpt_path)
+
+    trainer.test(ckpt_path="best", dataloaders=test_loader)
+
+    trainer.test(model)

@@ -10,7 +10,8 @@ from src.config import parse_train_args
 
 from typing import List
 
-from src.topology.pe import AddCellularRandomWalkPE
+from src.topology.cellular import LiftGraphToCC
+from src.topology.pe import AddCellularRandomWalkPE, AppendCCRWPE
 
 
 class ZINCModel(nn.Module):
@@ -107,12 +108,12 @@ class LitZINCModel(pl.LightningModule):
 if __name__ == '__main__':
     args = parse_train_args()
 
-    transform = AddCellularRandomWalkPE(walk_length=args.walk_length)
-    data_train = ZINC(args.zinc_path, subset=args.subset, split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
-    data_val = ZINC(args.zinc_path, subset=args.subset, split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    transform = [LiftGraphToCC(),AddCellularRandomWalkPE(walk_length=args.walk_length),AppendCCRWPE() ]
+    data_train = ZINC(args.zinc_path, subset=True, split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    data_val = ZINC(args.zinc_path, subset=True, split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
 
-    train_loader = DataLoader(data_train[:10000], batch_size=32)
-    val_loader = DataLoader(data_val[:1000], batch_size=32)
+    train_loader = DataLoader(data_train, batch_size=32)
+    val_loader = DataLoader(data_val, batch_size=32)
 
     gnn_params = {
         'initial_cell_dims': [1, 1, 1],
