@@ -130,25 +130,19 @@ class AppendCCRWPE(BaseTransform):
     def __init__(self,
                  cell_features_name: str = 'cell_features',
                  pe_name: str = 'cc_random_walk_pe',
-                 cell_ids: Optional[torch.Tensor] = None, #Specifices which cells to add the PE to the cell features
-                 ):
+                 use_node_features: bool = False):
         self.pe_name = pe_name
         self.cell_features_name = cell_features_name
-        self.cell_ids = cell_ids
-#TODO: Cast down cell features to node features
-    #Copy node features to x attribute in graph
+        self.use_node_features = use_node_features
+
     def __call__(self, data):
         cf = data[self.cell_features_name]
         pe = data[self.pe_name]
 
-        # data['x'] = cf
-        if self.cell_ids is not None:
-            cf = cf[self.cell_ids]
-            pe = pe[self.cell_ids]
-        new_cell_features = torch.cat((cf, pe), dim=1)
-
-        if self.cell_ids is None:
-            data[self.cell_features_name] = new_cell_features
+        if self.use_node_features:
+            data.x = torch.cat((cf[:data.num_nodes],
+                                pe[:data.num_nodes]), dim=1)
         else:
-            data[self.cell_features_name][self.cell_ids] = new_cell_features
+            data[self.cell_features_name] = torch.cat((cf, pe), dim=1)
+
         return data
