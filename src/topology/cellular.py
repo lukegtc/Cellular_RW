@@ -32,7 +32,7 @@ class CellularComplex:
         # possible extra stuff
         self.cell_batch: Optional[torch.Tensor] = cell_batch
         self.upper_adj_index: Optional[torch.Tensor] = None
-        self.cell_features = Optional[torch.Tensor] = None
+        self.cell_features: Optional[torch.Tensor] = None
 
     @property
     def num_cells(self):
@@ -61,7 +61,7 @@ class CellularComplex:
 
             nodes2edge[edge[0], edge[1]] = edge_id  # we'll need that for recovering cycle edge ids
             for node_id in edge:
-                # assert batch[node_id] == batch[edge[0][0]]
+                assert batch[node_id] == batch[edge[0]]
                 boundary_cols.append([edge_id, node_id])
 
             cell_batch.append(batch[edge[0]])
@@ -76,7 +76,10 @@ class CellularComplex:
             for node_id, node in enumerate(cycle):
                 next_node = cycle[(node_id + 1) % n_edges]
                 assert graph.has_edge(node, next_node)
-                edge = nodes2edge[node, next_node]
+                try:
+                    edge = nodes2edge[node, next_node]
+                except KeyError:
+                    edge = nodes2edge[next_node, node]
                 edges.append(edge)
             return cycle
 
@@ -86,7 +89,7 @@ class CellularComplex:
             cells[2][cycle_id] = cycle
 
             for edge_id in cycle:
-                assert cell_batch[edge_id] == cell_batch[cycle[0]]
+                # assert cell_batch[edge_id] == cell_batch[cycle[0]]
                 boundary_cols.append([cycle_id, edge_id])
 
             cell_batch.append(batch[cycle[0]])

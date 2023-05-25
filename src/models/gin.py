@@ -17,7 +17,7 @@ class GIN(nn.Module):
         for layer in self.layers:
             out = layer(h, edge_index)
             out = nn.functional.relu(self.bn(out))
-            h = h + out
+            h = out
 
         return h
 
