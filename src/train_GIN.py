@@ -70,8 +70,9 @@ if __name__ == '__main__':
     args = parse_train_args()
     #TODO: Add edge weight init
 
-    transform = Compose([AddRandomWalkPE(walk_length=args.walk_length), AppendRWPE()])
-    # transform = Compose([LiftGraphToCC(),AddCellularRandomWalkPE(walk_length=args.walk_length, max_cell_dim=args.pe_max_cell_dim), AppendCCRWPE()])
+    # transform = Compose([AddRandomWalkPE(walk_length=args.walk_length), AppendRWPE()])
+    transform = Compose([LiftGraphToCC(), AddCellularRandomWalkPE(walk_length=args.walk_length), AppendCCRWPE()])
+    transform_2 = Compose([LiftGraphToCC(), AppendCCRWPE()])
     data_train = ZINC('src/datasets/ZINC',subset=True, split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
     data_val = ZINC('src/datasets/ZINC',subset=True, split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
 

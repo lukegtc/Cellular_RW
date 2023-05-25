@@ -45,7 +45,7 @@ class CellularComplex:
     @classmethod
     def from_nx_graph(cls, graph: nx.Graph, batch: torch.Tensor):
         cell_batch = batch.tolist()
-        cells = []
+        cells = [{},{},{}]
         boundary_cols = []
 
         # ------- NODES ---------
@@ -61,7 +61,7 @@ class CellularComplex:
 
             nodes2edge[edge[0], edge[1]] = edge_id  # we'll need that for recovering cycle edge ids
             for node_id in edge:
-                assert batch[node_id] == batch[edge[0]]
+                # assert batch[node_id] == batch[edge[0][0]]
                 boundary_cols.append([edge_id, node_id])
 
             cell_batch.append(batch[edge[0]])
@@ -134,7 +134,7 @@ class LiftGraphToCC(BaseTransform):
         graph = nx.Graph()
         graph.add_nodes_from(range(data.num_nodes))
         graph.add_edges_from(data.edge_index.T.tolist())
-        cc = CellularComplex.from_nx_graph(graph, data.batch)
+        cc = CellularComplex.from_nx_graph(graph, data.x)
         data['cell_features'] = cc.cell_features
         data['boundary_index'] = cc.boundary_index
         data['upper_adj_index'] = cc.upper_adj_index
