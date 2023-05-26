@@ -8,16 +8,15 @@ import pytorch_lightning as pl
 
 from src.topology.cellular import LiftGraphToCC
 from src.topology.pe import AddRandomWalkPE, AddCellularRandomWalkPE, AppendCCRWPE, AppendRWPE
-from src.models.gin import GIN, GINHead
+from src.models.gin import GIN
 from src.config import parse_train_args
 
 
 class LitGINModel(pl.LightningModule):
-    def __init__(self, gin_params, head_params, training_params):
+    def __init__(self, gin_params, training_params):
         super().__init__()
         self.save_hyperparameters()
         self.gnn = GIN(**gin_params)
-        self.head = GINHead(**head_params)
         self.criterion = nn.L1Loss(reduce='mean')
         self.training_params = training_params
 
@@ -25,8 +24,7 @@ class LitGINModel(pl.LightningModule):
 
         h, edge_index = batch.x, batch.edge_index
         h = h.float()
-        out = self.gnn(h, edge_index)
-        out = self.head(out, batch.batch)
+        out = self.gnn(h, edge_index, batch.batch)
 
         label = batch.y
         loss = self.criterion(out, label)
@@ -38,8 +36,7 @@ class LitGINModel(pl.LightningModule):
 
         h, edge_index = batch.x, batch.edge_index
         h = h.float()
-        out = self.gnn(h, edge_index)
-        out = self.head(out, batch.batch)
+        out = self.gnn(h, edge_index, batch.batch)
 
         label = batch.y
         loss = self.criterion(out, label)
@@ -50,8 +47,7 @@ class LitGINModel(pl.LightningModule):
 
         h, edge_index = batch.x, batch.edge_index
         h = h.float()
-        out = self.gnn(h, edge_index)
-        out = self.head(out, batch.batch)
+        out = self.gnn(h, edge_index, batch.batch)
 
         label = batch.y
         loss = self.criterion(out, label)
@@ -118,10 +114,10 @@ if __name__ == '__main__':
         'num_layers': num_gnn_layers
     }
 
-    head_params = {
-        'hidden_dim': num_hidden,
-        'num_hidden_states': num_gnn_layers + 1,
-    }
+    # head_params = {
+    #     'hidden_dim': num_hidden,
+    #     'num_hidden_states': num_gnn_layers + 1,
+    # }
 
     training_params = {
         'lr': 1e-3,
@@ -130,7 +126,7 @@ if __name__ == '__main__':
         'min_lr': 1e-5
     }
 
-    model = LitGINModel(gnn_params, head_params, training_params)
+    model = LitGINModel(gnn_params, training_params)
 
     trainer = pl.Trainer(max_epochs=args.max_epochs,
                          accelerator=args.accelerator,

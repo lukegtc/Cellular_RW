@@ -55,6 +55,8 @@ class AddRandomWalkPE(BaseTransform):
         # The sparse tensor is unpacked at every step of the loop, so it should give the same result
         adj = to_torch_coo_tensor(edge_indices, edge_weights, size=(num_nodes, num_nodes))
 
+        # normalize the adjacency matrix
+        adj = adj * node_deg.resize(num_nodes, 1)
         return adj
 
 
@@ -112,8 +114,7 @@ class AppendCCRWPE(BaseTransform):
         pe = data[self.pe_name]
 
         if self.use_node_features:
-            data.x = torch.cat((cf[:data.num_nodes],
-                                pe[:data.num_nodes]), dim=1)
+            data.x = torch.cat((data.x, pe[:data.num_nodes]), dim=1)
         else:
             data[self.cell_features_name] = torch.cat((cf, pe), dim=1)
 
