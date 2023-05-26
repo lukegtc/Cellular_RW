@@ -16,7 +16,7 @@ class MPGNN(nn.Module):
         self.layers = nn.ModuleList([MPGNNLayer(num_hidden) for _ in range(num_layers)])
 
     def forward(self, h, e, edge_index):
-        h = self.embed(h)
+        h = self.embed(h) 
         e = self.edge_embed(e)
 
         for layer in self.layers:
@@ -115,10 +115,10 @@ class LSPE_MPGNNHead(nn.Module):
         self.predict = nn.Linear(2*num_hidden, 1)
 
     def forward(self, h, p, h_batch):
-        h = global_add_pool(h, h_batch)
+        h = global_add_pool(h, h_batch) #h = 2998x32, h_batch = 2998
         p = global_add_pool(p, h_batch)  # we can use batch indices for nodes because we have positional encoding for each node
         graph_reprs = torch.cat((h, p), dim=1)
-        final_prediction = self.predict(graph_reprs, dim=1)
+        final_prediction = self.predict(graph_reprs)
         return final_prediction.squeeze(1)
 
 
@@ -132,9 +132,9 @@ class LapEigLoss(nn.Module):
     def forward(self, p, normalized_laplacian, p_batch):
         # p is dense
         # we assume that laplacian is also dense
-        loss1 = torch.trace(p.T @ normalized_laplacian @ p)
+        loss1 = torch.trace(p.T @ normalized_laplacian.to('cuda') @ p)
 
-        p_unbatched = unbatch(p.detach(), p_batch)
+        p_unbatched = unbatch(p.detach().to('cpu'), p_batch.to('cpu'))
         p_block = sp.block_diag(p_unbatched)
 
         # # Conversion to torch tensor

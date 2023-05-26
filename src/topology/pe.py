@@ -11,7 +11,7 @@ from torch_geometric.utils import (
 )
 
 from .cellular import CellularComplexData
-
+import networkx as nx
 
 class AddRandomWalkPE(BaseTransform):
     def __init__(self, walk_length: int,
@@ -32,7 +32,9 @@ class AddRandomWalkPE(BaseTransform):
             pe_list.append(get_self_loop_attr(*to_edge_index(out), num_nodes=data.num_nodes))
         pe = torch.stack(pe_list, dim=1)
         data[self.attr_name] = pe
-
+        
+        lap = self.normalized_laplacian(data)
+        data['normalized_lap'] = lap
         return data
 
     @staticmethod
@@ -56,7 +58,18 @@ class AddRandomWalkPE(BaseTransform):
         adj = to_torch_coo_tensor(edge_indices, edge_weights, size=(num_nodes, num_nodes))
 
         return adj
+     
+    def normalized_laplacian(self, data):
+        nx_graph = nx.Graph()
 
+        # Add the edges to the NetworkX graph
+        for i, j in zip(data.edge_index[0], data.edge_index[1]):
+            nx_graph.add_edge(i.item(), j.item())
+
+        # get the normalized laplacian
+        lap = nx.normalized_laplacian_matrix(nx_graph)
+        
+        return lap
 
 class AddCellularRandomWalkPE(BaseTransform):
     r"""Adds the random walk positional encoding from the `"Graph Neural
@@ -83,8 +96,21 @@ class AddCellularRandomWalkPE(BaseTransform):
         add_rwpe = AddRandomWalkPE(self.walk_length, attr_name='tmp_rwpe')
         pe = add_rwpe(new_data).tmp_rwpe
         data[self.attr_name] = pe
+        lap = self.normalized_laplacian(data)
+        data['normalized_lap'] = lap
         return data
 
+    def normalized_laplacian(self, data):
+        nx_graph = nx.Graph()
+
+        # Add the edges to the NetworkX graph
+        for i, j in zip(data.edge_index[0], data.edge_index[1]):
+            nx_graph.add_edge(i.item(), j.item())
+
+        # get the normalized laplacian
+        lap = nx.normalized_laplacian_matrix(nx_graph)
+        
+        return lap
 
 class AppendRWPE(BaseTransform):
     def __init__(self,
@@ -118,3 +144,4 @@ class AppendCCRWPE(BaseTransform):
             data[self.cell_features_name] = torch.cat((cf, pe), dim=1)
 
         return data
+
