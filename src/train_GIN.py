@@ -120,7 +120,7 @@ if __name__ == '__main__':
 
     head_params = {
         'hidden_dim': num_hidden,
-        'num_hidden_states': num_gnn_layers,
+        'num_hidden_states': num_gnn_layers + 1,
     }
 
     training_params = {
