@@ -46,54 +46,55 @@ class LitZINCModel(pl.LightningModule):
     def __init__(self, gnn_params, head_params, training_params):
         super().__init__()
         self.save_hyperparameters()
-        self.gnn = MPGNN(**gnn_params)
-        self.head = MPGNNHead(**head_params)
+        # self.gnn = MPGNN(**gnn_params)
+        # self.head = MPGNNHead(**head_params)
 
-        # self.model = ZINCModel(gnn_params, head_params, training_params['use_pe'])
+        self.model = ZINCModel(gnn_params, head_params, training_params['use_pe'])
         self.criterion = nn.L1Loss(reduce='sum')
         self.training_params = training_params
 
     def training_step(self, batch, batch_idx):
-        h, edge_index, e, b = batch.x, batch.edge_index, batch.edge_attr, batch.batch
-        h = h.float()
-        e = e.unsqueeze(1).float()
+        # h, edge_index, e, b = batch.x, batch.edge_index, batch.edge_attr, batch.batch
+        # h = h.float()
+        # e = e.unsqueeze(1).float()
         # h, edge_index = batch.x, batch.edge_index
         # h = h.float()
-        out = self.gnn(h, e, edge_index)
-        out = self.head(out, b)
+        # out = self.gnn(h, e, edge_index)
+        # out = self.head(out, b)
 
         label = batch.y
-        # out = self.model(batch)
+        out = self.model(batch)
         loss = self.criterion(out, label)
         self.log("train_loss", loss)
         self.log('lr', self.trainer.optimizers[0].param_groups[0]['lr'])
         return loss
 
     def validation_step(self, batch, batch_idx):
-        h, edge_index, e, b = batch.x, batch.edge_index, batch.edge_attr, batch.batch
-        h = h.float()
-        e = e.unsqueeze(1).float()
-        # h, edge_index = batch.x, batch.edge_index
+        # h, edge_index, e, b = batch.x, batch.edge_index, batch.edge_attr, batch.batch
         # h = h.float()
-        out = self.gnn(h, e, edge_index)
-        out = self.head(out, b)
+        # e = e.unsqueeze(1).float()
+        # # h, edge_index = batch.x, batch.edge_index
+        # # h = h.float()
+        # out = self.gnn(h, e, edge_index)
+        # out = self.head(out, b)
 
         label = batch.y
-        # out = self.model(b)
+        out = self.model(batch)
         loss = self.criterion(out, label)
         self.log("val_loss", loss)
         return loss
 
     def test_step(self, batch, batch_idx):
-        h, edge_index, e, batch = batch.x, batch.edge_index, batch.edge_attr, batch.batch
-        h = h.float()
-        e = e.unsqueeze(1).float()
-        # h, edge_index = batch.x, batch.edge_index
+        # h, edge_index, e, batch = batch.x, batch.edge_index, batch.edge_attr, batch.batch
         # h = h.float()
-        out = self.gnn(h, e, edge_index)
-        out = self.head(out, batch)
+        # e = e.unsqueeze(1).float()
+        # # h, edge_index = batch.x, batch.edge_index
+        # # h = h.float()
+        # out = self.gnn(h, e, edge_index)
+        # out = self.head(out, batch)
 
         label = batch.y
+        out = self.model(batch)
         loss = self.criterion(out, label)
         self.log("test_loss", loss)
         return loss
@@ -147,7 +148,7 @@ if __name__ == '__main__':
 
     gnn_in_features = args.feat_in
     if args.use_pe is not None:
-        gnn_in_features += args.walk_length 
+        gnn_in_features += 2 * args.walk_length 
 
     gnn_params = {
         'feat_in': gnn_in_features,
