@@ -1,3 +1,4 @@
+from pytorch_lightning.utilities.types import EVAL_DATALOADERS
 import torch
 import torch.nn as nn
 import torch.optim as op
@@ -64,6 +65,20 @@ class LitGINModel(pl.LightningModule):
         # get last validation epoch loss
         val_loss = self.trainer.callback_metrics['val_loss']
         print(f'Current val loss {val_loss}')
+    
+    def on_test_epoch_end(self) -> None:
+        if self.trainer.sanity_checking:
+            return
+
+        # # get last train epoch loss
+        # train_loss = self.trainer.callback_metrics['train_loss']
+        # print(f'\nCurrent train loss {train_loss}')
+        # # get last validation epoch loss
+        # test_loss = self.trainer.callback_metrics['test_loss']
+        # print(f'Current test loss {test_loss}')
+    
+    def test_dataloader(self) -> EVAL_DATALOADERS:
+        return super().test_dataloader()
 
     def configure_optimizers(self):
         optimizer = op.Adam(self.parameters(), lr=self.training_params['lr'])
@@ -79,24 +94,27 @@ if __name__ == '__main__':
 
     # GIN does not use edge features, so we don't need to create any feature initialization transform.
     transform = None
+    transform_str = ''
     if args.use_pe is not None:
         if args.use_pe == 'rw':
             transform = Compose([
                 AddRandomWalkPE(walk_length=args.walk_length),
                 AppendRWPE()
             ])
+            transform_str = 'rw'
         elif args.use_pe == 'ccrw':
             transform = Compose([
                 LiftGraphToCC(),
                 AddCellularRandomWalkPE(walk_length=args.walk_length),
                 AppendCCRWPE(use_node_features=True)
             ])
+            transform_str = 'ccrw'
         else:
             raise ValueError('Invalid PE type')
 
-    data_train = ZINC(args.zinc_folder, subset=True, split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
-    data_val = ZINC(args.zinc_folder, subset=True, split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
-    data_test = ZINC(args.zinc_folder, subset=True, split='test', pre_transform=transform)
+    data_train = ZINC(args.zinc_folder + transform_str, subset=True, split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    data_val = ZINC(args.zinc_folder + transform_str, subset=True, split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    data_test = ZINC(args.zinc_folder + transform_str, subset=True, split='test', pre_transform=transform)
 
     train_loader = DataLoader(data_train, batch_size=128)
     val_loader = DataLoader(data_val, batch_size=128)
@@ -135,5 +153,5 @@ if __name__ == '__main__':
                          default_root_dir=args.trainer_root_dir)
     trainer.fit(model, train_loader, val_loader, ckpt_path=args.ckpt_path)
 
-    trainer.test(ckpt_path="best", dataloaders=test_loader)
-    trainer.test(model)
+    trainer.test(model, ckpt_path="best", dataloaders=test_loader)
+    # trainer.test(model)
