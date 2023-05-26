@@ -8,8 +8,7 @@ import pytorch_lightning as pl
 
 from src.topology.cellular import LiftGraphToCC
 from src.topology.pe import AddRandomWalkPE, AddCellularRandomWalkPE, AppendCCRWPE, AppendRWPE
-from src.models.gin import GIN
-from src.models.mpgnn import MPGNNHead
+from src.models.gin import GIN, GINHead
 from src.config import parse_train_args
 
 
@@ -18,12 +17,11 @@ class LitGINModel(pl.LightningModule):
         super().__init__()
         self.save_hyperparameters()
         self.gnn = GIN(**gin_params)
-        self.head = MPGNNHead(**head_params)
-        self.criterion = nn.L1Loss(reduce='sum')
+        self.head = GINHead(**head_params)
+        self.criterion = nn.L1Loss(reduce='mean')
         self.training_params = training_params
 
     def training_step(self, batch, batch_idx):
-
         h, edge_index = batch.x, batch.edge_index
         h = h.float()
         out = self.gnn(h, edge_index)
@@ -59,10 +57,11 @@ class LitGINModel(pl.LightningModule):
         print(f'Current val loss {val_loss}')
 
     def configure_optimizers(self):
-        optimizer = op.Adam(model.parameters(), lr=self.training_params['lr'])
+        optimizer = op.Adam(self.parameters(), lr=self.training_params['lr'])
         scheduler = op.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=self.training_params['lr_decay'],
                                                       patience=self.training_params['patience'],
-                                                      min_lr=self.training_params['min_lr'])
+                                                      min_lr=self.training_params['min_lr'],
+                                                      verbose=True)
         return {'optimizer': optimizer, 'lr_scheduler': scheduler, 'monitor': 'val_loss'}
 
 
@@ -86,25 +85,27 @@ if __name__ == '__main__':
         else:
             raise ValueError('Invalid PE type')
 
-    data_train = ZINC(args.zinc_folder, subset=False, split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
-    data_val = ZINC(args.zinc_folder, subset=False, split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
-    param_lol = 128
+    data_train = ZINC(args.zinc_folder, subset=True, split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    data_val = ZINC(args.zinc_folder, subset=True, split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
 
-    train_loader = DataLoader(data_train, batch_size=param_lol)
-    val_loader = DataLoader(data_val, batch_size=param_lol)
+    train_loader = DataLoader(data_train, batch_size=128)
+    val_loader = DataLoader(data_val, batch_size=128)
 
+    num_hidden = 128
+    num_gnn_layers = 4
     gnn_in_features = args.feat_in
     if args.use_pe is not None:
         gnn_in_features += args.walk_length
 
     gnn_params = {
         'feat_in': gnn_in_features,
-        'num_hidden': param_lol,
-        'num_layers': 4
+        'num_hidden': num_hidden,
+        'num_layers': num_gnn_layers
     }
 
     head_params = {
-        'num_hidden': param_lol,
+        'hidden_dim': num_hidden,
+        'num_hidden_states': num_gnn_layers + 1,
     }
 
     training_params = {

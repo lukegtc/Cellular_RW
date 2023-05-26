@@ -10,8 +10,7 @@ from torch_geometric.transforms import BaseTransform
 class CellularComplex:
     def __init__(self,
                  cells: List[Dict[int, Tuple]],
-                 boundary_index: torch.Tensor,
-                 cell_batch: Optional[torch.Tensor] = None):
+                 boundary_index: torch.Tensor):
         """
         Describes cellular complex.
 
@@ -30,7 +29,6 @@ class CellularComplex:
         self.boundary_index = boundary_index
 
         # possible extra stuff
-        self.cell_batch: Optional[torch.Tensor] = cell_batch
         self.upper_adj_index: Optional[torch.Tensor] = None
         self.cell_features: Optional[torch.Tensor] = None
 
@@ -40,11 +38,13 @@ class CellularComplex:
 
     @property
     def cell_dims(self):
-        return torch.tensor([[k] * len(cells) for k, cells in enumerate(self.cells)], dtype=torch.long)
+        cdims = []
+        for k, cells in enumerate(self.cells):
+            cdims.extend([k] * len(cells))
+        return torch.tensor(cdims, dtype=torch.long)
 
     @classmethod
-    def from_nx_graph(cls, graph: nx.Graph, batch: torch.Tensor):
-        cell_batch = batch.tolist()
+    def from_nx_graph(cls, graph: nx.Graph):
         cells = [{},{},{}]
         boundary_cols = []
 
@@ -61,10 +61,7 @@ class CellularComplex:
 
             nodes2edge[edge[0], edge[1]] = edge_id  # we'll need that for recovering cycle edge ids
             for node_id in edge:
-                assert batch[node_id] == batch[edge[0]]
                 boundary_cols.append([edge_id, node_id])
-
-            cell_batch.append(batch[edge[0]])
 
         # ------- CYCLES ---------
         digraph = graph.to_directed()
@@ -89,17 +86,12 @@ class CellularComplex:
             cells[2][cycle_id] = cycle
 
             for edge_id in cycle:
-                # assert cell_batch[edge_id] == cell_batch[cycle[0]]
                 boundary_cols.append([cycle_id, edge_id])
 
-            cell_batch.append(batch[cycle[0]])
-
-        cell_batch = torch.tensor(cell_batch, dtype=torch.long)
         boundary_index = torch.tensor(boundary_cols, dtype=torch.long).T
 
         cc = cls(cells=cells,
-                 boundary_index=boundary_index,
-                 cell_batch=cell_batch)
+                 boundary_index=boundary_index)
         cc.compute_upper_adj_index()
         cc.cell_features = torch.zeros((cc.num_cells, 1), dtype=torch.long)
         return cc
@@ -132,21 +124,34 @@ class CellularComplex:
                                          dim=1).long()
 
 
+class CellularComplexData(Data):
+    @classmethod
+    def from_data_cc_pair(cls, data: Data, cc: CellularComplex):
+        data['num_cells'] = cc.num_cells
+        data['cell_features'] = cc.cell_features
+        data['cell_dims'] = cc.cell_dims
+        data['cell_batch'] = torch.zeros(cc.num_cells, dtype=torch.long)
+        data['boundary_index'] = cc.boundary_index
+        data['upper_adj_index'] = cc.upper_adj_index
+        mapping = data.items()._mapping
+        return cls(**mapping)
+
+    def __inc__(self, key, value, *args, **kwargs):
+        if key == 'boundary_index':
+            return self.num_cells
+        if key == 'upper_adj_index':
+            return self.num_cells
+        return super().__inc__(key, value, *args, **kwargs)
+
+
 class LiftGraphToCC(BaseTransform):
     def __call__(self, data: Data) -> Data:
         graph = nx.Graph()
         graph.add_nodes_from(range(data.num_nodes))
         graph.add_edges_from(data.edge_index.T.tolist())
-        cc = CellularComplex.from_nx_graph(graph, data.x)
-        data['cell_features'] = cc.cell_features
-        data['boundary_index'] = cc.boundary_index
-        data['upper_adj_index'] = cc.upper_adj_index
-        data['cell_dims'] = cc.cell_dims
-        data['cell_batch'] = cc.cell_batch
-        return data
-
-
-
+        cc = CellularComplex.from_nx_graph(graph)
+        new_data = CellularComplexData.from_data_cc_pair(data, cc)
+        return new_data
 
 
 

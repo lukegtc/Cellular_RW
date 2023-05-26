@@ -10,6 +10,8 @@ from torch_geometric.utils import (
     to_torch_coo_tensor
 )
 
+from .cellular import CellularComplexData
+
 
 class AddRandomWalkPE(BaseTransform):
     def __init__(self, walk_length: int,
@@ -75,43 +77,13 @@ class AddCellularRandomWalkPE(BaseTransform):
         self.walk_length = walk_length
         self.attr_name = 'cc_random_walk_pe' if attr_name is None else attr_name
 
-    def __call__(self, data: Data):
-        eg_edge_index, eg_edge_weight = self.construct_extended_graph(data)
-        new_data = Data(edge_index=eg_edge_index,
-                        edge_weight=eg_edge_weight)
+    def __call__(self, data: CellularComplexData) -> CellularComplexData:
+        new_data = Data(edge_index=data.boundary_index,
+                        edge_weight=torch.ones(data.boundary_index.shape[1], dtype=torch.float32,))
         add_rwpe = AddRandomWalkPE(self.walk_length, attr_name='tmp_rwpe')
         pe = add_rwpe(new_data).tmp_rwpe
         data[self.attr_name] = pe
-
         return data
-
-    @staticmethod
-    def construct_extended_graph(data: Data):
-        edge_index = []
-        edge_weight = []
-
-        # add boundary connections as new edges
-        # replace edge ids for each boundary connection (vertex ids are right)
-        eg_edge_boundary_ids = data.boundary_index[1]
-        eg_edge_ids = torch.tensor(range(data.num_nodes, data.num_nodes + data.num_edges), dtype=torch.long)
-        eg_edge_boundary_ids[0, :] = eg_edge_ids[eg_edge_boundary_ids[0, :]]
-        edge_index.append(eg_edge_boundary_ids)
-        edge_weight.append(torch.ones(eg_edge_boundary_ids.shape[1]))
-
-        # replace cycle ids and edge ids in boundary connections
-        eg_cycle_boundary_ids = data.boundary_index[2]
-        eg_cycle_ids = torch.tensor(
-            range(data.num_nodes + data.num_edges, data.num_nodes + data.num_edges + data.num_cycles),
-            dtype=torch.long)
-        eg_cycle_boundary_ids[0, :] = eg_cycle_ids[eg_cycle_boundary_ids[0, :]]
-        eg_cycle_boundary_ids[1, :] = eg_edge_ids[eg_cycle_boundary_ids[1, :]]
-        edge_index.append(eg_cycle_boundary_ids)
-        edge_weight.append(torch.ones(eg_cycle_boundary_ids.shape[1]))
-
-        edge_index = torch.cat(edge_index, dim=1).T
-        edge_weight = torch.cat(edge_weight, dim=0).reshape(-1, 1)
-
-        return edge_index, edge_weight
 
 
 class AppendRWPE(BaseTransform):
