@@ -88,13 +88,27 @@ class AddCellularRandomWalkPE(BaseTransform):
     """
 
     def __init__(self, walk_length: int,
-                 attr_name: Optional[str] = None):
+                 attr_name: Optional[str] = None,
+                 traverse_type: str = "boundary"):
         self.walk_length = walk_length
         self.attr_name = 'cc_random_walk_pe' if attr_name is None else attr_name
+        self.traverse_type = traverse_type
 
     def __call__(self, data: CellularComplexData) -> CellularComplexData:
-        new_data = Data(edge_index=data.boundary_index,
-                        edge_weight=torch.ones(data.boundary_index.shape[1], dtype=torch.float32,))
+        if self.traverse_type == "boundary":
+            new_data = Data(edge_index=data.boundary_index,
+                            edge_weight=torch.ones(data.boundary_index.shape[1], dtype=torch.float32,))
+        elif self.traverse_type == "upper_adj":
+            new_data = Data(edge_index=data.upper_adj_index,
+                            edge_weight=torch.ones(data.upper_adj_index.shape[1], dtype=torch.float32))
+        elif self.traverse_type == "lower_adj":
+            new_data = Data(edge_index=data.lower_adj_index,
+                            edge_weight=torch.ones(data.lower_adj_index.shape[1], dtype=torch.float32))
+        elif self.traverse_type == "upper_lower":
+            new_data = Data(edge_index=data.upper_lower_adj_index,
+                            edge_weight=torch.ones(data.upper_lower_adj_index.shape[1], dtype=torch.float32))
+        else:
+            raise Exception("traverse_type illegal")
         add_rwpe = AddRandomWalkPE(self.walk_length, attr_name='tmp_rwpe')
         pe = add_rwpe(new_data).tmp_rwpe
         data[self.attr_name] = pe
