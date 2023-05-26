@@ -10,7 +10,7 @@ def parse_train_args():
 
     # pe params
     parser.add_argument('--walk_length', type=int, default=20)  # PE random walk length
-    parser.add_argument('--use_pe', type=str, default='rw', choices=['rw', 'ccrw'])  # PE type
+    parser.add_argument('--use_pe', type=str, default=None, choices=['rw', 'ccrw'])  # PE type
 
     # model params are mostly omitted here
     # they are set directly in training script corresponding to particular model

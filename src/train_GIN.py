@@ -22,6 +22,7 @@ class LitGINModel(pl.LightningModule):
         self.training_params = training_params
 
     def training_step(self, batch, batch_idx):
+
         h, edge_index = batch.x, batch.edge_index
         h = h.float()
         out = self.gnn(h, edge_index)
@@ -43,6 +44,18 @@ class LitGINModel(pl.LightningModule):
         label = batch.y
         loss = self.criterion(out, label)
         self.log("val_loss", loss)
+        return loss
+
+    def test_step(self, batch, batch_idx):
+
+        h, edge_index = batch.x, batch.edge_index
+        h = h.float()
+        out = self.gnn(h, edge_index)
+        out = self.head(out, batch.batch)
+
+        label = batch.y
+        loss = self.criterion(out, label)
+        self.log("test_loss", loss)
         return loss
 
     def on_validation_epoch_end(self) -> None:
@@ -123,3 +136,7 @@ if __name__ == '__main__':
                          log_every_n_steps=10,
                          default_root_dir=args.trainer_root_dir)
     trainer.fit(model, train_loader, val_loader, ckpt_path=args.ckpt_path)
+
+    trainer.test(ckpt_path="best", dataloaders=test_loader)
+
+    trainer.test(model)
