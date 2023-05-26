@@ -88,7 +88,7 @@ if __name__ == '__main__':
         elif args.use_pe == 'ccrw':
             transform = Compose([
                 LiftGraphToCC(),
-                AddCellularRandomWalkPE(walk_length=args.walk_length),
+                AddCellularRandomWalkPE(walk_length=args.walk_length, traverse_type=args.traverse_type),
                 AppendCCRWPE(use_node_features=True)
             ])
         else:
