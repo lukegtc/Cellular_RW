@@ -1,5 +1,3 @@
-import os
-
 import torch
 import torch.nn as nn
 import torch.optim as op
@@ -66,6 +64,20 @@ class LitGINModel(pl.LightningModule):
         # get last validation epoch loss
         val_loss = self.trainer.callback_metrics['val_loss']
         print(f'Current val loss {val_loss}')
+
+    def on_test_epoch_end(self) -> None:
+        if self.trainer.sanity_checking:
+            return
+
+        # # get last train epoch loss
+        # train_loss = self.trainer.callback_metrics['train_loss']
+        # print(f'\nCurrent train loss {train_loss}')
+        # # get last validation epoch loss
+        # test_loss = self.trainer.callback_metrics['test_loss']
+        # print(f'Current test loss {test_loss}')
+
+    def test_dataloader(self) -> EVAL_DATALOADERS:
+        return super().test_dataloader()
 
     def configure_optimizers(self):
         optimizer = op.Adam(self.parameters(), lr=self.training_params['lr'])
@@ -137,5 +149,5 @@ if __name__ == '__main__':
                          default_root_dir=args.trainer_root_dir)
     trainer.fit(model, train_loader, val_loader, ckpt_path=args.ckpt_path)
 
-    trainer.test(ckpt_path="best", dataloaders=test_loader)
-    trainer.test(model)
+    trainer.test(model, ckpt_path="best", dataloaders=test_loader)
+    # trainer.test(model)
