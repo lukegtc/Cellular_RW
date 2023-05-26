@@ -1,5 +1,5 @@
-src/datasets/
-src/lightning_logs/
+datasets/
+lightning_logs/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
