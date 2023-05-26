@@ -73,6 +73,7 @@ class AddRandomWalkPE(BaseTransform):
         
         return lap
 
+
 class AddCellularRandomWalkPE(BaseTransform):
     r"""Adds the random walk positional encoding from the `"Graph Neural
     Networks with Learnable Structural and Positional Representations"
