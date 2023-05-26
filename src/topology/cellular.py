@@ -10,7 +10,8 @@ from torch_geometric.transforms import BaseTransform
 class CellularComplex:
     def __init__(self,
                  cells: List[Dict[int, Tuple]],
-                 boundary_index: torch.Tensor):
+                 boundary_index: torch.Tensor,
+                 coboundary_index: torch.Tensor):
         """
         Describes cellular complex.
 
@@ -27,6 +28,7 @@ class CellularComplex:
         # basic objects to define a cellular complex
         self.cells = cells
         self.boundary_index = boundary_index
+        self.coboundary_index = coboundary_index
 
         # possible extra stuff
         self.upper_adj_index: Optional[torch.Tensor] = None
@@ -48,6 +50,7 @@ class CellularComplex:
     def from_nx_graph(cls, graph: nx.Graph):
         cells = [{},{},{}]
         boundary_cols = []
+        coboundary_cols = []
 
         # ------- NODES ---------
         cells[0] = {}
@@ -63,6 +66,7 @@ class CellularComplex:
             nodes2edge[edge[0], edge[1]] = edge_id  # we'll need that for recovering cycle edge ids
             for node_id in edge:
                 boundary_cols.append([edge_id, node_id])
+                coboundary_cols.append([node_id, edge_id])
 
         # ------- CYCLES ---------
         digraph = graph.to_directed()
@@ -88,11 +92,14 @@ class CellularComplex:
 
             for edge_id in cycle:
                 boundary_cols.append([cycle_id, edge_id])
+                coboundary_cols.append([edge_id, cycle_id])
 
         boundary_index = torch.tensor(boundary_cols, dtype=torch.long).T
+        coboundary_index = torch.tensor(coboundary_cols, dtype=torch.long).T
 
         cc = cls(cells=cells,
-                 boundary_index=boundary_index)
+                 boundary_index=boundary_index,
+                 coboundary_index=coboundary_index)
         cc.compute_upper_adj_index()
         cc.compute_lower_adj_index()
         cc.cell_features = torch.zeros((cc.num_cells, 1), dtype=torch.long)
@@ -127,7 +134,7 @@ class CellularComplex:
 
     def compute_lower_adj_index(self):
         # Lower adj is from edge node to edge node using a normal node and from cycle node to cycle node using an edge node
-        edge_lower_adj = [[], [], []]
+        # edge_lower_adj = [[], [], []]
         # index1 = edge1_id, index2 = edge2_id, index3 = node_id
         assert self.upper_adj_index is not None
         # if index1 is same for two rows, then make an edge between index3 of those two rows
@@ -148,7 +155,9 @@ class CellularComplexData(Data):
         data['cell_dims'] = cc.cell_dims
         data['cell_batch'] = torch.zeros(cc.num_cells, dtype=torch.long)
         data['boundary_index'] = cc.boundary_index
+        data['coboundary_index'] = cc.coboundary_index
         data['upper_adj_index'] = cc.upper_adj_index
+        data['lower_adj_index'] = cc.lower_adj_index
         mapping = data.items()._mapping
         return cls(**mapping)
 
@@ -156,6 +165,8 @@ class CellularComplexData(Data):
         if key == 'boundary_index':
             return self.num_cells
         if key == 'upper_adj_index':
+            return self.num_cells
+        if key == 'lower_adj_index':
             return self.num_cells
         return super().__inc__(key, value, *args, **kwargs)
 
