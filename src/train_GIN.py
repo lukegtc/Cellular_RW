@@ -96,7 +96,7 @@ if __name__ == '__main__':
         elif args.use_pe == 'ccrw':
             transforms.extend([
                 LiftGraphToCC(),
-                AddCellularRandomWalkPE(walk_length=args.walk_length),
+                AddCellularRandomWalkPE(walk_length=args.walk_length, traverse_type=args.traverse_type),
             ])
             if not args.learnable_pe:
                 transforms.append(AppendCCRWPE(use_node_features=True))
