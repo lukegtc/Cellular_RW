@@ -73,6 +73,7 @@ class AddRandomWalkPE(BaseTransform):
         
         return lap
 
+
 class AddCellularRandomWalkPE(BaseTransform):
     r"""Adds the random walk positional encoding from the `"Graph Neural
     Networks with Learnable Structural and Positional Representations"
@@ -95,6 +96,12 @@ class AddCellularRandomWalkPE(BaseTransform):
         self.traverse_type = traverse_type
 
     def __call__(self, data: CellularComplexData) -> CellularComplexData:
+        new_data = Data(edge_index=torch.cat((data.boundary_index, data.coboundary_index), dim=1),
+                        edge_weight=torch.ones(data.boundary_index.shape[1]+data.coboundary_index.shape[1], dtype=torch.float32,))
+        add_rwpe = AddRandomWalkPE(self.walk_length, attr_name='tmp_rwpe')
+        pe = add_rwpe(new_data).tmp_rwpe
+        data[self.attr_name] = pe[:, 1::2]
+
         if self.traverse_type == "boundary":
             new_data = Data(edge_index=data.boundary_index)
         elif self.traverse_type == "upper_adj":

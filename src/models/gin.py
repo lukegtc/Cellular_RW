@@ -5,7 +5,6 @@ from torch_scatter import scatter_add
 from torch_geometric.nn import global_add_pool
 
 
-
 class GIN(nn.Module):
     """ GIN model. """
     def __init__(self, feat_in, num_hidden, num_layers):
@@ -40,6 +39,57 @@ class GINLayer(nn.Module):
 
         return h
 
+
+class GINLSPE(nn.Module):
+    """ GIN model. """
+
+    def __init__(self, feat_in, pos_in, num_hidden, num_layers):
+        super().__init__()
+        self.h_embed = nn.Linear(feat_in, num_hidden)
+        self.p_embed = nn.Linear(pos_in, num_hidden)
+        self.layers = nn.ModuleList([GINLSPELayer(num_hidden) for _ in range(num_layers)])
+        self.readout = nn.Sequential(nn.Linear(2*num_hidden, num_hidden), nn.ReLU(),
+                                     nn.Linear(num_hidden, 1))
+
+    def forward(self, h, p, edge_index, batch):
+        h = self.h_embed(h)
+        p = self.p_embed(p)
+
+        for layer in self.layers:
+            new_h, new_p = layer(h, p, edge_index)
+            h = h + F.relu(new_h)
+            p = p + F.relu(new_p)
+
+        h_agg = global_add_pool(h, batch)
+        p_agg = global_add_pool(p, batch)
+
+        return self.readout(torch.cat((h_agg, p_agg), dim=1)).squeeze()
+
+
+class GINLSPELayer(nn.Module):
+    """ GIN-0 layer. """
+
+    def __init__(self, num_hidden):
+        super().__init__()
+        self.h_update = nn.Sequential(nn.Linear(2 * num_hidden, num_hidden), nn.ReLU(),
+                                      nn.Linear(num_hidden, num_hidden))
+        self.p_update = nn.Sequential(nn.Linear(num_hidden, num_hidden), nn.ReLU(),
+                                      nn.Linear(num_hidden, num_hidden))
+
+    def forward(self, h, p, edge_index):
+        send, rec = edge_index
+
+        # node feature updates use node features and PEs
+        h_messages = torch.cat((h[send], p[send]), dim=1)
+        h_messages_agg = scatter_add(h_messages, rec, dim=0, dim_size=h.shape[0])
+        h = self.h_update(torch.cat((h, p), dim=1) + h_messages_agg)
+
+        # PE updates use only PEs
+        p_messages = p[send]
+        p_messages_agg = scatter_add(p_messages, rec, dim=0, dim_size=p.shape[0])
+        p = self.p_update(p + p_messages_agg)
+
+        return h, p
 
 
 # class GIN(nn.Module):
