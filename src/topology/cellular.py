@@ -157,6 +157,7 @@ class CellularComplexData(Data):
         data['boundary_index'] = cc.boundary_index
         data['coboundary_index'] = cc.coboundary_index
         data['upper_adj_index'] = cc.upper_adj_index
+        data['lower_adj_index'] = cc.lower_adj_index
         mapping = data.items()._mapping
         return cls(**mapping)
 
@@ -164,6 +165,8 @@ class CellularComplexData(Data):
         if key == 'boundary_index':
             return self.num_cells
         if key == 'upper_adj_index':
+            return self.num_cells
+        if key == 'lower_adj_index':
             return self.num_cells
         return super().__inc__(key, value, *args, **kwargs)
 
