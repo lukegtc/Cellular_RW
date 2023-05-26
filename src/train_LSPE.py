@@ -5,11 +5,14 @@ from torch_geometric.datasets import ZINC
 from torch_geometric.data import DataLoader
 import pytorch_lightning as pl
 import scipy.sparse as sp
+from torch_geometric.transforms import Compose
 
 from models.mpgnn import LSPE_MPGNN, LSPE_MPGNNHead, LapEigLoss
 
-from src.topology.pe import AddRandomWalkPE
+from topology.cellular import LiftGraphToCC
+from topology.pe import AddRandomWalkPE, AddCellularRandomWalkPE, AppendCCRWPE, AppendRWPE
 from config import parse_train_args
+
 
 
 class ZINCModel(nn.Module):
@@ -24,7 +27,7 @@ class ZINCModel(nn.Module):
         self.head = LSPE_MPGNNHead(**head_params)
 
     def extract_gnn_args(self, graph):
-        h, edge_index, e, batch, p = graph.x, graph.edge_index, graph.edge_attr, graph.batch, graph.random_walk_pe
+        h, edge_index, e, batch, p = graph.x, graph.edge_index, graph.edge_attr, graph.batch, graph.cc_random_walk_pe
         h = h.float()
         e = e.unsqueeze(1).float()
         return h, e, p, edge_index, batch
@@ -50,14 +53,17 @@ class LitZINCModel(pl.LightningModule):
         self.pos_enc_loss = LapEigLoss(frobenius_norm_coeff=self.training_params['lspe_lambda'],
                                        pos_enc_dim=self.gnn_params['pos_in'])
 
+
     def training_step(self, batch, batch_idx):
         label = batch.y
         out, p = self.model(batch)
         task_loss = self.task_loss(out, label)
 
+
         normalized_laplacians = batch.normalized_lap
         lap = sp.block_diag(normalized_laplacians)
         lap = torch.from_numpy(lap.todense()).float()
+        # lap = lap.to('cuda')
         lap_eig_loss = self.pos_enc_loss(p, lap, batch.batch)
 
         loss = task_loss + self.training_params['lspe_alpha'] * lap_eig_loss
@@ -94,15 +100,39 @@ class LitZINCModel(pl.LightningModule):
 if __name__ == '__main__':
     args = parse_train_args()
 
-    transform = AddRandomWalkPE(walk_length=args.walk_length)
-    data_train = ZINC('datasets/ZINC', split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
-    data_val = ZINC('datasets/ZINC', split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    # GIN does not use edge features, so we don't need to create any feature initialization transform.
+    transform = None
+    if args.use_pe is not None:
+        if args.use_pe == 'rw':
+            print('LSPE with RW')
+            transform = Compose([
+                AddRandomWalkPE(walk_length=args.walk_length),
+                AppendRWPE()
+            ])
+        elif args.use_pe == 'ccrw':
+            print('LSPE with CRW')
+            transform = Compose([
+                LiftGraphToCC(),
+                AddCellularRandomWalkPE(walk_length=args.walk_length),
+                AppendCCRWPE(use_node_features=True)
+            ])
+        else:
+            raise ValueError('Invalid PE type')
 
-    train_loader = DataLoader(data_train[:10000], batch_size=32)
-    val_loader = DataLoader(data_val[:1000], batch_size=32)
+    data_train = ZINC(args.zinc_folder, subset=True, split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    data_val = ZINC(args.zinc_folder, subset=True, split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    data_test = ZINC(args.zinc_folder, subset=True, split='test', pre_transform=transform)
+
+    train_loader = DataLoader(data_train, batch_size=128)
+    val_loader = DataLoader(data_val, batch_size=128)
+    test_loader = DataLoader(data_test, batch_size=128)
+
+    gnn_in_features = args.feat_in
+    if args.use_pe is not None:
+        gnn_in_features += args.walk_length 
 
     gnn_params = {
-        'feat_in': args.feat_in,
+        'feat_in': gnn_in_features,
         'pos_in': args.walk_length,
         'edge_feat_in': 1,
         'num_hidden': 32,
