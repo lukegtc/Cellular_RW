@@ -29,10 +29,15 @@ class ZINCModel(nn.Module):
         h = h.float()
         e = e.unsqueeze(1).float()
 
-        if self.use_pe:
-            p = graph.random_walk_pe
+        if args.use_pe is not None:
+            if args.use_pe == 'rw':
+                p = graph.random_walk_pe
+            elif args.use_pe == 'ccrw':
+                p = graph.cc_random_walk_pe
+            
+            else:
+                raise ValueError('Invalid PE type')
             h = torch.cat((h, p), dim=1)
-
         return h, e, edge_index, batch
 
     def forward(self, graph):
