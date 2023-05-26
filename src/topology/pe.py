@@ -96,20 +96,17 @@ class AddCellularRandomWalkPE(BaseTransform):
 
     def __call__(self, data: CellularComplexData) -> CellularComplexData:
         if self.traverse_type == "boundary":
-            new_data = Data(edge_index=data.boundary_index,
-                            edge_weight=torch.ones(data.boundary_index.shape[1], dtype=torch.float32,))
+            new_data = Data(edge_index=data.boundary_index)
         elif self.traverse_type == "upper_adj":
-            new_data = Data(edge_index=data.upper_adj_index,
-                            edge_weight=torch.ones(data.upper_adj_index.shape[1], dtype=torch.float32))
+            new_data = Data(edge_index=data.upper_adj_index)
         elif self.traverse_type == "lower_adj":
-            new_data = Data(edge_index=data.lower_adj_index,
-                            edge_weight=torch.ones(data.lower_adj_index.shape[1], dtype=torch.float32))
+            new_data = Data(edge_index=data.lower_adj_index)
         elif self.traverse_type == "upper_lower":
-            new_data = Data(edge_index=data.upper_lower_adj_index,
-                            edge_weight=torch.ones(data.upper_lower_adj_index.shape[1], dtype=torch.float32))
+            edge_index = torch.cat([data.lower_adj_index, data.upper_adj_index], dim=1)
+            new_data = Data(edge_index=edge_index)
         elif self.traverse_type == "upper_lower_boundary":
-            new_data = Data(edge_index=data.upper_lower_boundary_adj_index,
-                            edge_weight=torch.ones(data.upper_lower_boundary_adj_index.shape[1], dtype=torch.float32))
+            edge_index = torch.cat([data.lower_adj_index, data.upper_adj_index, data.boundary_index], dim=1)
+            new_data = Data(edge_index=edge_index)
         else:
             raise Exception("traverse_type illegal")
         add_rwpe = AddRandomWalkPE(self.walk_length, attr_name='tmp_rwpe')
