@@ -100,9 +100,11 @@ if __name__ == '__main__':
 
     data_train = ZINC(args.zinc_folder, subset=True, split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
     data_val = ZINC(args.zinc_folder, subset=True, split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    data_test = ZINC(args.zinc_folder, subset=True, split='test', pre_transform=transform)
 
     train_loader = DataLoader(data_train, batch_size=128)
     val_loader = DataLoader(data_val, batch_size=128)
+    test_loader = DataLoader(data_test, batch_size=128)
 
     num_hidden = 128
     num_gnn_layers = 4
@@ -118,7 +120,7 @@ if __name__ == '__main__':
 
     head_params = {
         'hidden_dim': num_hidden,
-        'num_hidden_states': num_gnn_layers + 1,
+        'num_hidden_states': num_gnn_layers,
     }
 
     training_params = {
@@ -138,5 +140,4 @@ if __name__ == '__main__':
     trainer.fit(model, train_loader, val_loader, ckpt_path=args.ckpt_path)
 
     trainer.test(ckpt_path="best", dataloaders=test_loader)
-
     trainer.test(model)
