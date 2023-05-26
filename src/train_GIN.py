@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn as nn
 import torch.optim as op
@@ -69,14 +70,7 @@ class LitGINModel(pl.LightningModule):
         if self.trainer.sanity_checking:
             return
 
-        # # get last train epoch loss
-        # train_loss = self.trainer.callback_metrics['train_loss']
-        # print(f'\nCurrent train loss {train_loss}')
-        # # get last validation epoch loss
-        # test_loss = self.trainer.callback_metrics['test_loss']
-        # print(f'Current test loss {test_loss}')
-
-    def test_dataloader(self) -> EVAL_DATALOADERS:
+    def test_dataloader(self):
         return super().test_dataloader()
 
     def configure_optimizers(self):
@@ -113,6 +107,8 @@ if __name__ == '__main__':
     zinc_folder = args.zinc_folder
     if args.use_pe is not None:
         zinc_folder = os.path.join(zinc_folder, args.use_pe)
+    if args.learnable_pe:
+        zinc_folder = os.path.join(zinc_folder, 'learnable')
     data_train = ZINC(zinc_folder, subset=True, split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
     data_val = ZINC(zinc_folder, subset=True, split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
     data_test = ZINC(zinc_folder, subset=True, split='test', pre_transform=transform)
@@ -125,7 +121,10 @@ if __name__ == '__main__':
     num_gnn_layers = 4
     gnn_in_features = args.feat_in
     if args.use_pe is not None:
-        gnn_in_features += args.walk_length
+        if not args.learnable_pe:
+            gnn_in_features += args.walk_length//2
+        else:
+            gnn_in_features += args.walk_length
 
     gnn_params = {
         'feat_in': gnn_in_features,
