@@ -107,6 +107,9 @@ class AddCellularRandomWalkPE(BaseTransform):
         elif self.traverse_type == "upper_lower":
             new_data = Data(edge_index=data.upper_lower_adj_index,
                             edge_weight=torch.ones(data.upper_lower_adj_index.shape[1], dtype=torch.float32))
+        elif self.traverse_type == "upper_lower_boundary":
+            new_data = Data(edge_index=data.upper_lower_boundary_adj_index,
+                            edge_weight=torch.ones(data.upper_lower_boundary_adj_index.shape[1], dtype=torch.float32))
         else:
             raise Exception("traverse_type illegal")
         add_rwpe = AddRandomWalkPE(self.walk_length, attr_name='tmp_rwpe')
