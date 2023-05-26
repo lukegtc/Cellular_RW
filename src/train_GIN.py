@@ -1,3 +1,5 @@
+import os
+
 import torch
 import torch.nn as nn
 import torch.optim as op
@@ -80,23 +82,28 @@ if __name__ == '__main__':
     # GIN does not use edge features, so we don't need to create any feature initialization transform.
     transform = None
     if args.use_pe is not None:
+        transforms = []
         if args.use_pe == 'rw':
-            transform = Compose([
-                AddRandomWalkPE(walk_length=args.walk_length),
-                AppendRWPE()
-            ])
+            transforms.append(AddRandomWalkPE(walk_length=args.walk_length))
+            if not args.learnable_pe:
+                transforms.append(AppendRWPE())
         elif args.use_pe == 'ccrw':
-            transform = Compose([
+            transforms.extend([
                 LiftGraphToCC(),
                 AddCellularRandomWalkPE(walk_length=args.walk_length),
-                AppendCCRWPE(use_node_features=True)
             ])
+            if not args.learnable_pe:
+                transforms.append(AppendCCRWPE(use_node_features=True))
         else:
             raise ValueError('Invalid PE type')
+        transform = Compose(transforms)
 
-    data_train = ZINC(args.zinc_folder, subset=True, split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
-    data_val = ZINC(args.zinc_folder, subset=True, split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
-    data_test = ZINC(args.zinc_folder, subset=True, split='test', pre_transform=transform)
+    zinc_folder = args.zinc_folder
+    if args.use_pe is not None:
+        zinc_folder = os.path.join(zinc_folder, args.use_pe)
+    data_train = ZINC(zinc_folder, subset=True, split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    data_val = ZINC(zinc_folder, subset=True, split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    data_test = ZINC(zinc_folder, subset=True, split='test', pre_transform=transform)
 
     train_loader = DataLoader(data_train, batch_size=128)
     val_loader = DataLoader(data_val, batch_size=128)
@@ -113,11 +120,6 @@ if __name__ == '__main__':
         'num_hidden': num_hidden,
         'num_layers': num_gnn_layers
     }
-
-    # head_params = {
-    #     'hidden_dim': num_hidden,
-    #     'num_hidden_states': num_gnn_layers + 1,
-    # }
 
     training_params = {
         'lr': 1e-3,
