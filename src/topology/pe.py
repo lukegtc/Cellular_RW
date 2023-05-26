@@ -153,6 +153,11 @@ class AddCellularRandomWalkPE(BaseTransform):
                 if cell_dims[data.upper_adj_index[0, i]].item() == 0:
                     pe[:, data.upper_adj_index[0, i]] += pe[:, data.upper_adj_index[2, i]]
 
+        if self.traverse_type in ["lower_adj", "upper_lower"]:
+            for i in range(data.lower_adj_index.shape[1]):
+                if cell_dims[data.lower_adj_index[0, i]].item() == 2:
+                    pe[:, data.lower_adj_index[0, i]] += pe[:, data.lower_adj_index[2, i]]
+
         data[self.attr_name] = pe
         lap = self.normalized_laplacian(data)
         data['normalized_lap'] = lap
