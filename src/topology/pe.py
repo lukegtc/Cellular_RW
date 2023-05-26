@@ -90,10 +90,12 @@ class AddCellularRandomWalkPE(BaseTransform):
 
     def __init__(self, walk_length: int,
                  attr_name: Optional[str] = None,
-                 traverse_type: str = "boundary"):
+                 traverse_type: str = "boundary",
+                 use_node_features: bool = False):
         self.walk_length = walk_length
         self.attr_name = 'cc_random_walk_pe' if attr_name is None else attr_name
         self.traverse_type = traverse_type
+        self.use_node_features = use_node_features
 
     def __call__(self, data: CellularComplexData) -> CellularComplexData:
         new_data = Data(edge_index=torch.cat((data.boundary_index, data.coboundary_index), dim=1),
@@ -165,6 +167,10 @@ class AddCellularRandomWalkPE(BaseTransform):
                 if cell_dims[data.lower_adj_index[0, i]].item() == 2:
                     pe[:, data.lower_adj_index[0, i]] += pe[:, data.lower_adj_index[2, i]]
 
+        if self.use_node_features:
+            data[self.attr_name] = pe[:data.num_nodes]
+        else:
+            data[self.attr_name] = pe
         data[self.attr_name] = pe
         lap = self.normalized_laplacian(data)
         data['normalized_lap'] = lap

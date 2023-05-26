@@ -85,16 +85,12 @@ if __name__ == '__main__':
     pe_name = 'random_walk_pe'
     if args.use_pe == 'rw':
         transforms.append(AddRandomWalkPE(walk_length=args.walk_length, attr_name=pe_name))
-        if not args.learnable_pe:
-            transforms.append(AppendRWPE())
     elif args.use_pe == 'ccrw':
         pe_name = 'cc_random_walk_pe'
         transforms.extend([
             LiftGraphToCC(),
-            AddCellularRandomWalkPE(walk_length=args.walk_length, attr_name=pe_name),
+            AddCellularRandomWalkPE(walk_length=args.walk_length, attr_name=pe_name, use_node_features=True),
         ])
-        if not args.learnable_pe:
-            transforms.append(AppendCCRWPE(use_node_features=True))
     else:
         raise ValueError('Invalid PE type')
     transform = Compose(transforms)
