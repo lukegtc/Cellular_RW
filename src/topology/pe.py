@@ -98,14 +98,16 @@ class AddCellularRandomWalkPE(BaseTransform):
         self.use_node_features = use_node_features
 
     def __call__(self, data: CellularComplexData) -> CellularComplexData:
-        new_data = Data(edge_index=torch.cat((data.boundary_index, data.coboundary_index), dim=1),
-                        edge_weight=torch.ones(data.boundary_index.shape[1]+data.coboundary_index.shape[1], dtype=torch.float32,))
-        add_rwpe = AddRandomWalkPE(self.walk_length, attr_name='tmp_rwpe')
-        pe = add_rwpe(new_data).tmp_rwpe
-        data[self.attr_name] = pe[:, 1::2]
+        # new_data = Data(edge_index=torch.cat((data.boundary_index, data.coboundary_index), dim=1),
+        #                 edge_weight=torch.ones(data.boundary_index.shape[1]+data.coboundary_index.shape[1], dtype=torch.float32,))
+        # add_rwpe = AddRandomWalkPE(self.walk_length, attr_name='tmp_rwpe')
+        # pe = add_rwpe(new_data).tmp_rwpe
+        # data[self.attr_name] = pe[:, 1::2]
 
         if self.traverse_type == "boundary":
-            new_data = Data(edge_index=data.boundary_index)
+            # new_data = Data(edge_index=data.boundary_index)
+            new_data = Data(edge_index=torch.cat((data.boundary_index, data.coboundary_index), dim=1),
+                            edge_weight=torch.ones(data.boundary_index.shape[1]+data.coboundary_index.shape[1], dtype=torch.float32,))
         elif self.traverse_type == "upper_adj":
             # adj = data.upper_adj_index
             # all_edges = set()
@@ -115,7 +117,7 @@ class AddCellularRandomWalkPE(BaseTransform):
             # # convert all_edges to 2d tensor
             # edge_index = torch.tensor(list(all_edges), dtype=torch.long).t()
             # new_data = Data(edge_index=edge_index)
-            new_data = Data(edge_index=data.upper_adj_index[:1, :])
+            new_data = Data(edge_index=data.upper_adj_index[:2, :])
         elif self.traverse_type == "lower_adj":
             # adj = data.lower_adj_index
             # all_edges = set()
@@ -125,7 +127,7 @@ class AddCellularRandomWalkPE(BaseTransform):
             # # convert all_edges to 2d tensor
             # edge_index = torch.tensor(list(all_edges), dtype=torch.long).t()
             # new_data = Data(edge_index=edge_index)
-            new_data = Data(edge_index=data.lower_adj_index[:1, :])
+            new_data = Data(edge_index=data.lower_adj_index[:2, :])
         elif self.traverse_type == "upper_lower":
             # adj = torch.cat([data.lower_adj_index, data.upper_adj_index], dim=1)
             # all_edges = set()
@@ -135,7 +137,7 @@ class AddCellularRandomWalkPE(BaseTransform):
             # # convert all_edges to 2d tensor
             # edge_index = torch.tensor(list(all_edges), dtype=torch.long).t()
             # new_data = Data(edge_index=edge_index)
-            edge_index = torch.cat([data.lower_adj_index[:1, :], data.upper_adj_index[:1, :]], dim=1)
+            edge_index = torch.cat([data.lower_adj_index[:2, :], data.upper_adj_index[:2, :]], dim=1)
             new_data = Data(edge_index=edge_index)
         elif self.traverse_type == "upper_lower_boundary":
             # adj = torch.cat([data.lower_adj_index, data.upper_adj_index], dim=1)
@@ -148,7 +150,7 @@ class AddCellularRandomWalkPE(BaseTransform):
             # edge_index = torch.cat([edge_index, data.boundary_index], dim=1)
             # new_data = Data(edge_index=edge_index)
             edge_index = \
-                torch.cat([data.lower_adj_index[:1, :], data.upper_adj_index[:1, :], data.boundary_index], dim=1)
+                torch.cat([data.lower_adj_index[:2, :], data.upper_adj_index[:2, :], data.boundary_index], dim=1)
             new_data = Data(edge_index=edge_index)
         else:
             raise Exception("traverse_type illegal")
@@ -171,7 +173,7 @@ class AddCellularRandomWalkPE(BaseTransform):
             data[self.attr_name] = pe[:data.num_nodes]
         else:
             data[self.attr_name] = pe
-        data[self.attr_name] = pe
+        # data[self.attr_name] = pe
         lap = self.normalized_laplacian(data)
         data['normalized_lap'] = lap
         return data
