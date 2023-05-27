@@ -16,7 +16,6 @@ class GatedGCN_LSPE(nn.Module):
         self.e_embed = nn.Linear(edge_feat_in, num_hidden)
         self.p_embed = nn.Linear(pos_in, num_hidden)
         self.layers = nn.ModuleList([GatedGCN_LSPELayer(num_hidden) for _ in range(num_layers)])
-        self.predict = nn.Linear(2*num_hidden, 1)
         self.readout = nn.Sequential(nn.Linear(2*num_hidden, num_hidden), nn.ReLU(),nn.Linear(num_hidden , num_hidden//2),nn.ReLU(), nn.Linear(num_hidden // 2, 1))
 
     def forward(self, h, e, p, edge_index,batch):
@@ -63,31 +62,3 @@ class GatedGCN_LSPELayer(nn.Module):
 
 
         return h, e, p
-
-
-
-
-
-class LapEigLoss(nn.Module):
-    """ One part of loss function for LSPE-MP-GNN model. """
-    def __init__(self, frobenius_norm_coeff, pos_enc_dim):
-        super().__init__()
-        self.coeff = frobenius_norm_coeff
-        self.pos_enc_dim = pos_enc_dim
-
-    def forward(self, p, normalized_laplacian, p_batch):
-        # p is dense
-        # we assume that laplacian is also dense
-        loss1 = torch.trace(p.T @ normalized_laplacian.to('cuda') @ p)
-
-        p_unbatched = unbatch(p.detach().to('cpu'), p_batch.to('cpu'))
-        p_block = sp.block_diag(p_unbatched)
-
-
-        PTP_In = p_block.T * p_block - sp.eye(p_block.shape[1])
-        loss2 = torch.tensor(linalg.norm(PTP_In, 'fro') ** 2)
-
-        batch_size = len(p_unbatched)
-        n = normalized_laplacian.shape[0]
-        loss = (loss1 + self.coeff * loss2) / (self.pos_enc_dim * batch_size * n)
-        return loss
