@@ -16,7 +16,7 @@ import networkx as nx
 
 class AddRandomWalkPE(BaseTransform):
     def __init__(self, walk_length: int,
-                 attr_name: Optional[str] = None):
+                 attr_name: Optional[str] = None, **kwargs):
         self.walk_length = walk_length
         self.attr_name = 'random_walk_pe' if attr_name is None else attr_name
 
@@ -92,7 +92,7 @@ class AddCellularRandomWalkPE(BaseTransform):
     def __init__(self, walk_length: int,
                  attr_name: Optional[str] = None,
                  traverse_type: str = "boundary",
-                 use_node_features: bool = False):
+                 use_node_features: bool = False, **kwargs):
         self.walk_length = walk_length
         self.attr_name = 'cc_random_walk_pe' if attr_name is None else attr_name
         self.traverse_type = traverse_type

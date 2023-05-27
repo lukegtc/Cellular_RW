@@ -2,27 +2,32 @@ import os
 import torch
 import torch.nn as nn
 import torch.optim as op
-from torch_geometric.datasets import ZINC
 from torch_geometric.data import DataLoader
+from torch_geometric.datasets import ZINC
 from torch_geometric.transforms import Compose
+
 import pytorch_lightning as pl
 
+from src.models.gin import GIN, GINLSPE
+from src.config import parse_train_args
 from src.topology.cellular import LiftGraphToCC
 from src.topology.pe import AddRandomWalkPE, AddCellularRandomWalkPE, AppendCCRWPE, AppendRWPE
-from src.models.gin import GIN
-from src.config import parse_train_args
 
 
-class LitGINModel(pl.LightningModule):
-    def __init__(self, gin_params, training_params):
+class LitGNNModel(pl.LightningModule):
+    model_classes = {
+        'gin': GIN,
+        'gin_lspe': GINLSPE
+    }
+
+    def __init__(self, model_name, model_params, training_params):
         super().__init__()
         self.save_hyperparameters()
-        self.gnn = GIN(**gin_params)
+        self.gnn = self.model_classes[model_name](**model_params)
         self.criterion = nn.L1Loss(reduce='mean')
         self.training_params = training_params
 
     def training_step(self, batch, batch_idx):
-
         h, edge_index = batch.x, batch.edge_index
         h = h.float()
         out = self.gnn(h, edge_index, batch.batch)
@@ -34,7 +39,6 @@ class LitGINModel(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-
         h, edge_index = batch.x, batch.edge_index
         h = h.float()
         out = self.gnn(h, edge_index, batch.batch)
@@ -45,7 +49,6 @@ class LitGINModel(pl.LightningModule):
         return loss
 
     def test_step(self, batch, batch_idx):
-
         h, edge_index = batch.x, batch.edge_index
         h = h.float()
         out = self.gnn(h, edge_index, batch.batch)
@@ -82,54 +85,66 @@ class LitGINModel(pl.LightningModule):
         return {'optimizer': optimizer, 'lr_scheduler': scheduler, 'monitor': 'val_loss'}
 
 
-if __name__ == '__main__':
-    args = parse_train_args()
-
+def load_zinc(zinc_folder, use_pe, learnable=False, **pe_params):
     # GIN does not use edge features, so we don't need to create any feature initialization transform.
-    transform = None
-    if args.use_pe is not None:
-        transforms = []
-        if args.use_pe == 'rw':
-            transforms.append(AddRandomWalkPE(walk_length=args.walk_length))
-            if not args.learnable_pe:
+    pre_transforms = []
+    transforms = []
+    if use_pe is not None:
+        if use_pe == 'rw':
+            pre_transforms.append(AddRandomWalkPE(**pe_params))
+            if not learnable:
                 transforms.append(AppendRWPE())
-        elif args.use_pe == 'ccrw':
-            transforms.extend([
+        elif use_pe == 'ccrw':
+            pre_transforms.extend([
                 LiftGraphToCC(),
-                AddCellularRandomWalkPE(walk_length=args.walk_length, traverse_type=args.traverse_type),
+                AddCellularRandomWalkPE(**pe_params),
             ])
-            if not args.learnable_pe:
+            if not learnable:
                 transforms.append(AppendCCRWPE(use_node_features=True))
         else:
             raise ValueError('Invalid PE type')
-        transform = Compose(transforms)
+    pre_transform = Compose(pre_transforms)
+    transform = Compose(transforms)
 
-    zinc_folder = args.zinc_folder
-    if args.use_pe is not None:
-        zinc_folder = os.path.join(zinc_folder, args.use_pe)
-    if args.learnable_pe:
-        zinc_folder = os.path.join(zinc_folder, 'learnable')
-    data_train = ZINC(zinc_folder, subset=True, split='train', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
-    data_val = ZINC(zinc_folder, subset=True, split='val', pre_transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
-    data_test = ZINC(zinc_folder, subset=True, split='test', pre_transform=transform)
+    zinc_folder = zinc_folder
+    if use_pe is not None:
+        zinc_folder = zinc_folder + '_' + use_pe + '_' + str(pe_params['walk_length'])
+        if use_pe == 'ccrw':
+            zinc_folder = zinc_folder + '_' + pe_params['traverse_type']
+
+    data_train = ZINC(zinc_folder, subset=True, split='train',
+                      pre_transform=pre_transform,
+                      transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    data_val = ZINC(zinc_folder, subset=True, split='val',
+                    pre_transform=pre_transform,
+                    transform=transform)  # QM9('datasets/QM9', pre_transform=transform)
+    data_test = ZINC(zinc_folder, subset=True, split='test',
+                     pre_transform=pre_transform,
+                     transform=transform)
+
+    return data_train, data_val, data_test
+
+
+if __name__ == '__main__':
+    args, pe_params = parse_train_args()
+    pe_params['attr_name'] = 'random_walk_pe'
+    pe_params['use_node_features'] = True
+
+    data_train, data_val, data_test = load_zinc(args.zinc_folder, args.use_pe, args.learnable_pe, **pe_params)
 
     train_loader = DataLoader(data_train, batch_size=128)
     val_loader = DataLoader(data_val, batch_size=128)
     test_loader = DataLoader(data_test, batch_size=128)
 
+    # basic setup
+    feat_in = 1
     num_hidden = 128
-    num_gnn_layers = 4
-    gnn_in_features = args.feat_in
-    if args.use_pe is not None:
-        if not args.learnable_pe:
-            gnn_in_features += args.walk_length//2
-        else:
-            gnn_in_features += args.walk_length
+    num_layers = 4
 
-    gnn_params = {
-        'feat_in': gnn_in_features,
+    model_params = {
+        'feat_in': feat_in,
         'num_hidden': num_hidden,
-        'num_layers': num_gnn_layers
+        'num_layers': num_layers
     }
 
     training_params = {
@@ -139,7 +154,18 @@ if __name__ == '__main__':
         'min_lr': 1e-5
     }
 
-    model = LitGINModel(gnn_params, training_params)
+    # setup dependent on using learnable PE
+    model_name = args.model
+    if args.use_pe is not None:
+        pe_features = args.walk_length
+        if args.learnable_pe:
+            model_name = model_name + '_lspe'
+            model_params['pos_in'] = pe_features
+            training_params['pe_name'] = pe_params['attr_name']
+        else:
+            model_params['feat_in'] += pe_features
+
+    model = LitGNNModel(model_name, model_params, training_params)
 
     trainer = pl.Trainer(max_epochs=args.max_epochs,
                          accelerator=args.accelerator,
@@ -147,6 +173,4 @@ if __name__ == '__main__':
                          log_every_n_steps=10,
                          default_root_dir=args.trainer_root_dir)
     trainer.fit(model, train_loader, val_loader, ckpt_path=args.ckpt_path)
-
     trainer.test(model, ckpt_path="best", dataloaders=test_loader)
-    # trainer.test(model)

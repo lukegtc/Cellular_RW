@@ -9,7 +9,7 @@ from torch_geometric.transforms import BaseTransform
 
 class CellularComplex:
     def __init__(self,
-                 cells: List[Dict[int, Tuple]],
+                 cell_dims: torch.Tensor,
                  boundary_index: torch.Tensor,
                  coboundary_index: torch.Tensor):
         """
@@ -26,7 +26,7 @@ class CellularComplex:
         This way we have clearly defined C_k spaces and boundary index, which describes the cellular complex.
         """
         # basic objects to define a cellular complex
-        self.cells = cells
+        self.cell_dims = cell_dims
         self.boundary_index = boundary_index
         self.coboundary_index = coboundary_index
 
@@ -34,17 +34,6 @@ class CellularComplex:
         self.upper_adj_index: Optional[torch.Tensor] = None
         self.lower_adj_index: Optional[torch.Tensor] = None
         self.cell_features: Optional[torch.Tensor] = None
-
-    @property
-    def num_cells(self):
-        return sum(len(k_cells) for k_cells in self.cells)
-
-    @property
-    def cell_dims(self):
-        cdims = []
-        for k, cells in enumerate(self.cells):
-            cdims.extend([k] * len(cells))
-        return torch.tensor(cdims, dtype=torch.long)
 
     @classmethod
     def from_nx_graph(cls, graph: nx.Graph):
@@ -92,46 +81,33 @@ class CellularComplex:
 
         boundary_index = torch.tensor(boundary_cols, dtype=torch.long).T
         coboundary_index = torch.tensor(coboundary_cols, dtype=torch.long).T
+        cell_dims = torch.tensor(cell_dims, dtype=torch.long)
 
-        cc = cls(boundary_index=boundary_index,
+        cc = cls(cell_dims=cell_dims,
+                 boundary_index=boundary_index,
                  coboundary_index=coboundary_index)
         cc.compute_upper_adj_index()
         cc.compute_lower_adj_index()
-        cc.cell_features = torch.zeros((cc.num_cells, 1), dtype=torch.long)
+        cc.cell_features = torch.zeros_like(cell_dims, dtype=torch.long).reshape(-1, 1)
         return cc
 
     def compute_upper_adj_index(self):
-        vertex_upper_adj = [[], [], []]
-        for edge_id, edge in self.cells[1].items():  # unique_id for edge id:(node1, node2)
-            vertex_upper_adj[0].append(edge[0])
-            vertex_upper_adj[1].append(edge[1])
-            vertex_upper_adj[2].append(edge_id)
-
-            vertex_upper_adj[0].append(edge[1])
-            vertex_upper_adj[1].append(edge[0])
-            vertex_upper_adj[2].append(edge_id)
-
-        edge_upper_adj = [[], [], []]
-
-        for cycle_id, cycle in self.cells[2].items():
-            for edge_id_1, edge_id_2 in combinations(cycle, 2):
-                edge_upper_adj[0].append(edge_id_1)
-                edge_upper_adj[1].append(edge_id_2)
-                edge_upper_adj[2].append(cycle_id)
-
-                edge_upper_adj[0].append(edge_id_2)
-                edge_upper_adj[1].append(edge_id_1)
-                edge_upper_adj[2].append(cycle_id)
-
-        self.upper_adj_index = torch.cat([torch.Tensor(vertex_upper_adj),
-                                          torch.Tensor(edge_upper_adj)],
-                                         dim=1).long()
+        #assert self.upper_adj_index is not None
+        # if index1 is same for two rows, then make an edge between index3 of those two rows
+        edge_ids = self.coboundary_index[:, 0]
+        cycle_ids = self.coboundary_index[:, 1]
+        mask = (cycle_ids[:-1] == cycle_ids[1:]).float()
+        indices = torch.where(mask == 1)
+        result = torch.stack([edge_ids[indices[0]], edge_ids[indices[0] + 1], cycle_ids[indices[0]]], dim=1)
+        result = result[result[:, 2] != 0]  # remove rows with node_id = 0
+        result = result.T.long()
+        self.upper_adj_index = result
 
     def compute_lower_adj_index(self):
         # Lower adj is from edge node to edge node using a normal node and from cycle node to cycle node using an edge node
         # edge_lower_adj = [[], [], []]
         # index1 = edge1_id, index2 = edge2_id, index3 = node_id
-        assert self.upper_adj_index is not None
+        # assert self.upper_adj_index is not None
         # if index1 is same for two rows, then make an edge between index3 of those two rows
         edge_ids = self.boundary_index[:, 0]
         node_ids = self.boundary_index[:, 1]
@@ -146,10 +122,10 @@ class CellularComplex:
 class CellularComplexData(Data):
     @classmethod
     def from_data_cc_pair(cls, data: Data, cc: CellularComplex):
-        data['num_cells'] = cc.num_cells
+        data['num_cells'] = cc.cell_dims.shape[0]
         data['cell_features'] = cc.cell_features
         data['cell_dims'] = cc.cell_dims
-        data['cell_batch'] = torch.zeros(cc.num_cells, dtype=torch.long)
+        data['cell_batch'] = torch.zeros(data['num_cells'], dtype=torch.long)
         data['boundary_index'] = cc.boundary_index
         data['coboundary_index'] = cc.coboundary_index
         data['upper_adj_index'] = cc.upper_adj_index

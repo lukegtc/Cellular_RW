@@ -4,21 +4,22 @@ import argparse
 def parse_train_args():
     parser = argparse.ArgumentParser()
 
-    # dataset params
+    # ZINC params
     parser.add_argument('--zinc_folder', type=str, default='datasets/ZINC')
     parser.add_argument('--subset', type=bool, default=True)
 
-    # pe params
-    parser.add_argument('--walk_length', type=int, default=20)  # PE random walk length
+    # PE params
     parser.add_argument('--use_pe', type=str, default=None, choices=['rw', 'ccrw'])  # PE type
     parser.add_argument('--learnable_pe', type=bool, default=False)  # whether to learn PE or not
-    parser.add_argument('--traverse_type', type=str, default=None,
-                        choices=['boundary', 'upper_adj', 'lower_adj', 'upper_lower', 'upper_lower_boundary'])
 
-    # model params are mostly omitted here
-    # they are set directly in training script corresponding to particular model
-    # this one corresponds to basic MPGNN
-    parser.add_argument('--feat_in', type=int, default=1)
+    # random walk based PE params
+    pe_params = parser.add_argument_group('pe_params')
+    pe_params.add_argument('--walk_length', type=int, default=20)  # PE random walk length
+    pe_params.add_argument('--traverse_type', type=str, default='upper_adj',
+                           choices=['boundary', 'upper_adj', 'lower_adj', 'upper_lower', 'upper_lower_boundary'])
+
+    # gnn name (we set params inside train script)
+    parser.add_argument('--model', type=str, default='gin', choices=['gin'])
 
     # training params
     parser.add_argument('--max_epochs', type=int, default=500)
@@ -28,4 +29,13 @@ def parse_train_args():
     parser.add_argument('--ckpt_path', type=str, default=None)
 
     args = parser.parse_args()
-    return args
+
+    # extract pe params
+    pe_params = {}
+    for g in parser._action_groups:
+        title = g.title.lower()
+        if 'pe_params' in title:
+            for a in g._group_actions:
+                pe_params[a.dest] = getattr(args, a.dest)
+
+    return args, pe_params

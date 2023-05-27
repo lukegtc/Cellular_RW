@@ -11,7 +11,9 @@ class GIN(nn.Module):
         super().__init__()
         self.h_embed = nn.Linear(feat_in, num_hidden)
         self.layers = nn.ModuleList([GINLayer(num_hidden) for _ in range(num_layers)])
-        self.readout = nn.Sequential(nn.Linear(num_hidden, num_hidden // 2), nn.ReLU(), nn.Linear(num_hidden // 2, 1))
+        self.readout = nn.Sequential(nn.Linear(num_hidden, num_hidden // 2),
+                                     nn.ReLU(),
+                                     nn.Linear(num_hidden // 2, 1))
 
     def forward(self, h, edge_index, batch):
         h = self.h_embed(h)
@@ -20,7 +22,6 @@ class GIN(nn.Module):
             h = h + F.relu(layer(h, edge_index))
 
         h_agg = global_add_pool(h, batch)
-
         return self.readout(h_agg).squeeze()
 
 
