@@ -29,7 +29,7 @@ class LitMPGNN_LSPEModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
 
-        h, e,p, edge_index = batch.x,batch.edge_attr, batch.random_walk_pe,batch.edge_index
+        h, e,p, edge_index = batch.x,batch.edge_attr, batch.cc_random_walk_pe,batch.edge_index
         h = h.float()
         e = e.float()
         p = p.float()
@@ -40,15 +40,14 @@ class LitMPGNN_LSPEModel(pl.LightningModule):
         normalized_laplacians = batch.normalized_lap
         lap = sp.block_diag(normalized_laplacians)
         lap = torch.from_numpy(lap.todense()).float()
-        # (p, lap, batch.batch)
-        loss = self.criterion(out, label) + self.pos_enc_loss(p_agg, lap, batch.batch)
+        loss = self.criterion(out, label) + self.pos_enc_loss(p, lap, batch.batch)
         self.log("train_loss", loss)
         self.log('lr', self.trainer.optimizers[0].param_groups[0]['lr'])
         return loss
 
     def validation_step(self, batch, batch_idx):
 
-        h, e,p, edge_index = batch.x,batch.edge_attr, batch.random_walk_pe,batch.edge_index
+        h, e,p, edge_index = batch.x,batch.edge_attr, batch.cc_random_walk_pe,batch.edge_index
         h = h.float()
         e = e.float()
         p = p.float()
@@ -59,13 +58,13 @@ class LitMPGNN_LSPEModel(pl.LightningModule):
         normalized_laplacians = batch.normalized_lap
         lap = sp.block_diag(normalized_laplacians)
         lap = torch.from_numpy(lap.todense()).float()
-        loss = self.criterion(out, label) + self.pos_enc_loss(p_agg, lap, batch.batch)
+        loss = self.criterion(out, label) + self.pos_enc_loss(p, lap, batch.batch)
         self.log("val_loss", loss)
         return loss
 
     def test_step(self, batch, batch_idx):
 
-        h, e,p, edge_index = batch.x,batch.edge_attr, batch.random_walk_pe,batch.edge_index
+        h, e,p, edge_index = batch.x,batch.edge_attr, batch.cc_random_walk_pe,batch.edge_index
         h = h.float()
         e = e.float()
         p = p.float()
@@ -76,7 +75,7 @@ class LitMPGNN_LSPEModel(pl.LightningModule):
         normalized_laplacians = batch.normalized_lap
         lap = sp.block_diag(normalized_laplacians)
         lap = torch.from_numpy(lap.todense()).float()
-        loss = self.criterion(out, label) + self.pos_enc_loss(p_agg, lap, batch.batch)
+        loss = self.criterion(out, label) + self.pos_enc_loss(p, lap, batch.batch)
         self.log("test_loss", loss)
         return loss
 

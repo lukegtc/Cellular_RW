@@ -75,6 +75,15 @@ The $RW$ indicates a random walk function $RW = AD^{-1}$. (\cite{dwivedi2022grap
 The initialization is done by considering the nearby nodes, we extend upon this idea by including all other cycles up to length $k$, which allows for a more complete representation of the underlying graph structure. 
 
 # Experiments
+|    Maximum Epochs    |  500 |
+|:--------------------:|:----:|
+|  Random Walk Length  |  20  |
+| Start Learning Rate  | 1e-3 |
+|   End Learning Rate  | 1e-6 |
+|  Learning Rate Decay |  0.5 |
+|       Patience       |  25  |
+|      LSPE lambda     | 1e-1 |
+|      LSPE alpha      |   1  |
 We evaluate the impact of the random walk initialization by comparing three different networks, described in Section \ref{mpgnn_section} using Pytorch on ZINC molecular dataset (\cite{zinc}).
 \subsection{Dataset}
 \textbf{ZINC} dataset from the ZINC database (\cite{zinc}) contains about 250,000 molecular graphs with up to 38 heavy atoms. It is a graph regression dataset where the property to be predicted is its constrained solubility, a fundamental chemical property in molecular design (\cite{jin2019junction}).
@@ -85,16 +94,30 @@ A sample of this dataset is shown in Figure \ref{fig:zinc_sample} using the Netw
 \\
 
  ## Models
- ### MP-GNN
-The MP-GNN network makes use of the same setup as defined within the original LSPE paper to deliver a proper comparison between our implementation and that of the original LSPE implementation. Two experiments were conducted, where one mad use of a 10,000 training and 1,000 validation sample of the original ZINC dataset, while the other employed the entirety of the dataset. This network did not make use of the 
+### GIN
 
- ### MP-GNN-PE
+### GIN-PE
+
+
 
  ### MP-GNN-LSPE
 
 # Results
 After conducting some small-scale tests based on a sample training set of 10,000 molecules, the resulting validation
 losses are shown below.
+
+|    Model   |   PE Type   | Cellular in PE | Type of Random Walk                             | Training Loss | Validation Loss | Test Loss | Command                                                                    | Epoch |
+|:----------:|:-----------:|----------------|-------------------------------------------------|---------------|-----------------|-----------|----------------------------------------------------------------------------|-------|
+|     GIN    |     None    | No             | NA                                              | 0.052         | 0.463           | 0.466     | python -m src.train_GIN                                                    | 199   |
+|     GIN    | Random Walk | Yes            | No                                              | 0.004         | 0.288           | 0.255     | python -m src.train_GIN --use_pe rw                                        | 499   |
+|     GIN    | Random Walk | Yes            | Boundary/Co boundary                            | 0.002         | 0.295           | 0.261     | python -m src.train_GIN --use_pe ccrw                                      | 499   |
+|     GIN    | Random Walk | Yes            | Upper adjacency                                 | 0.004         | 0.32            | 0.283     | python -m src.train_GIN --use_pe ccrw --traverse_type upper_adj            | 499   |
+|     GIN    | Random Walk | Yes            | Lower adjacency                                 | 0.003         | 0.291           | 0.261     | python -m src.train_GIN --use_pe ccrw --traverse_type lower_adj            | 499   |
+| GIN        | Random Walk | Yes            | Both Upper and lower adjacency                  | 0.003         | 0.284           | 0.259     | python -m src.train_GIN --use_pe ccrw --traverse_type upper_lower          | 499   |
+|     GIN    | Random Walk | Yes            | Boundary/Co boundary, Upper and lower adjacency | 0.005         | 0.303           | 0.247     | python -m src.train_GIN --use_pe ccrw --traverse_type upper_lower_boundary | 499   |
+|  GIN-LSPE  | Random Walk | No             | No                                              | 0.002         | 0.278           | 0.245     | python -m src.train_GIN_LSPE --use_pe rw                                   | 499   |
+| MPGNN-LSPE | Random Walk | No             | No                                              | 1.03          | 0.850           | 0.844     | python -m src.train_MPGNN_LSPE --use_pe rw                                 | 499   |
+
 ![validation_loss](pictures/Validation_Loss_plot.png)
 # Conclusion
 

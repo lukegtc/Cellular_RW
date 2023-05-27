@@ -31,7 +31,7 @@ class GatedGCN_LSPE(nn.Module):
         p_agg = global_add_pool(p, batch)
         hep = torch.cat((h_agg, p_agg), dim=1)
         out = self.readout(hep).squeeze()
-        return out
+        return out,p_agg
 
 
 class GatedGCN_LSPELayer(nn.Module):

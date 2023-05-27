@@ -1,5 +1,8 @@
 from pytorch_lightning.utilities.types import EVAL_DATALOADERS
 import torch
+import scipy.sparse as sp
+import scipy.sparse.linalg as linalg
+
 import torch.nn as nn
 import torch.optim as op
 from torch_geometric.datasets import ZINC
@@ -8,6 +11,7 @@ from torch_geometric.transforms import Compose
 import pytorch_lightning as pl
 
 from src.models.GatedGCN import GatedGCN_LSPE
+from src.models.MPGNN_LSPE import LapEigLoss
 from src.topology.cellular import LiftGraphToCC
 from src.topology.pe import AddRandomWalkPE, AddCellularRandomWalkPE, AppendCCRWPE, AppendRWPE
 from src.models.gin import GIN
@@ -21,6 +25,8 @@ class LitGCN_LSPEModel(pl.LightningModule):
         self.gnn = GatedGCN_LSPE(**gin_params)
         self.criterion = nn.L1Loss(reduce='mean')
         self.training_params = training_params
+        self.pos_enc_loss = LapEigLoss(frobenius_norm_coeff=self.training_params['lspe_lambda'],
+                                       pos_enc_dim=gnn_params['pos_in'])
 
     def training_step(self, batch, batch_idx):
 
@@ -29,10 +35,13 @@ class LitGCN_LSPEModel(pl.LightningModule):
         e = e.float()
         p = p.float()
         e = torch.unsqueeze(e,1)
-        out = self.gnn(h, e, p, edge_index, batch.batch)
+        out,p_agg = self.gnn(h, e, p, edge_index, batch.batch)
 
         label = batch.y
-        loss = self.criterion(out, label)
+        normalized_laplacians = batch.normalized_lap
+        lap = sp.block_diag(normalized_laplacians)
+        lap = torch.from_numpy(lap.todense()).float()
+        loss = self.criterion(out, label) + self.pos_enc_loss(p, lap, batch.batch)
         self.log("train_loss", loss)
         self.log('lr', self.trainer.optimizers[0].param_groups[0]['lr'])
         return loss
@@ -44,10 +53,13 @@ class LitGCN_LSPEModel(pl.LightningModule):
         e = e.float()
         p = p.float()
         e = torch.unsqueeze(e,1)
-        out = self.gnn(h, e, p, edge_index, batch.batch)
+        out, p_agg = self.gnn(h, e, p, edge_index, batch.batch)
 
         label = batch.y
-        loss = self.criterion(out, label)
+        normalized_laplacians = batch.normalized_lap
+        lap = sp.block_diag(normalized_laplacians)
+        lap = torch.from_numpy(lap.todense()).float()
+        loss = self.criterion(out, label) + self.pos_enc_loss(p, lap, batch.batch)
         self.log("val_loss", loss)
         return loss
 
@@ -58,10 +70,13 @@ class LitGCN_LSPEModel(pl.LightningModule):
         e = e.float()
         p = p.float()
         e = torch.unsqueeze(e,1)
-        out = self.gnn(h, e, p, edge_index, batch.batch)
+        out, p_agg = self.gnn(h, e, p, edge_index, batch.batch)
 
         label = batch.y
-        loss = self.criterion(out, label)
+        normalized_laplacians = batch.normalized_lap
+        lap = sp.block_diag(normalized_laplacians)
+        lap = torch.from_numpy(lap.todense()).float()
+        loss = self.criterion(out, label) + self.pos_enc_loss(p, lap, batch.batch)
         self.log("test_loss", loss)
         return loss
 
@@ -155,7 +170,9 @@ if __name__ == '__main__':
         'lr': 1e-3,
         'lr_decay': 0.5,
         'patience': 20,
-        'min_lr': 1e-5
+        'min_lr': 1e-5,
+        'lspe_lambda': 1e-1,
+        'lspe_alpha': 1
     }
 
     model = LitGCN_LSPEModel(gnn_params, training_params)
