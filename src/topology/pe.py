@@ -13,6 +13,7 @@ from torch_geometric.utils import (
 from .cellular import CellularComplexData
 import networkx as nx
 
+
 class AddRandomWalkPE(BaseTransform):
     def __init__(self, walk_length: int,
                  attr_name: Optional[str] = None):

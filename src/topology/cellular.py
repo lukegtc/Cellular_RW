@@ -48,20 +48,18 @@ class CellularComplex:
 
     @classmethod
     def from_nx_graph(cls, graph: nx.Graph):
-        cells = [{},{},{}]
         boundary_cols = []
         coboundary_cols = []
+        cell_dims = []
 
         # ------- NODES ---------
-        cells[0] = {}
-        for node_id in graph.nodes:
-            cells[0][node_id] = ()
+        for _ in graph.nodes:
+            cell_dims.append(0)
 
         # ------- EDGES ---------
         nodes2edge = {}
-        cells[1] = {}
         for edge_id, edge in enumerate(graph.edges, start=len(graph.nodes)):
-            cells[1][edge_id] = edge
+            cell_dims.append(1)
 
             nodes2edge[edge[0], edge[1]] = edge_id  # we'll need that for recovering cycle edge ids
             for node_id in edge:
@@ -85,11 +83,9 @@ class CellularComplex:
                 edges.append(edge)
             return cycle
 
-        cells[2] = {}
         for cycle_id, cycle in enumerate(cycles, start=len(graph.nodes) + len(graph.edges)):
+            cell_dims.append(2)
             cycle = to_edge_set(cycle)
-            cells[2][cycle_id] = cycle
-
             for edge_id in cycle:
                 boundary_cols.append([cycle_id, edge_id])
                 coboundary_cols.append([edge_id, cycle_id])
@@ -97,8 +93,7 @@ class CellularComplex:
         boundary_index = torch.tensor(boundary_cols, dtype=torch.long).T
         coboundary_index = torch.tensor(coboundary_cols, dtype=torch.long).T
 
-        cc = cls(cells=cells,
-                 boundary_index=boundary_index,
+        cc = cls(boundary_index=boundary_index,
                  coboundary_index=coboundary_index)
         cc.compute_upper_adj_index()
         cc.compute_lower_adj_index()
@@ -146,6 +141,7 @@ class CellularComplex:
         result = result[result[:, 2] != 0]  # remove rows with node_id = 0
         result = result.T.long()
         self.lower_adj_index = result
+
 
 class CellularComplexData(Data):
     @classmethod
