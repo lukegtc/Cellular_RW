@@ -191,6 +191,7 @@ class AddCellularRandomWalkPE(BaseTransform):
         
         return lap
 
+
 class AppendRWPE(BaseTransform):
     def __init__(self,
                  h_name: str = 'x',

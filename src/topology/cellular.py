@@ -88,7 +88,7 @@ class CellularComplex:
                  coboundary_index=coboundary_index)
         cc.compute_upper_adj_index()
         cc.compute_lower_adj_index()
-        cc.cell_features = torch.zeros((cc.num_cells, 1), dtype=torch.long)
+        cc.cell_features = torch.zeros((cell_dims.shape[0], 1), dtype=torch.long)
         return cc
 
     def compute_upper_adj_index(self):
