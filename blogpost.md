@@ -98,6 +98,8 @@ We define three additional types of random walk on top of the traditional one (\
 <img src="pictures/low_adj.png"> &nbsp;&nbsp;&nbsp;&nbsp; <img src="pictures/up_adj.png">  <img src="pictures/boundary_adj.png">
 </p>
 
+![low_adj](pictures/low_adj.png) ![alt-text-2](pictures/up_adj.png) ![alt-text-2](pictures/boundary_adj.png) ![alt-text-2](pictures/combined_rw.png)
+
 # Experiments
 |    Maximum Epochs    |  500 |
 |:--------------------:|:----:|
