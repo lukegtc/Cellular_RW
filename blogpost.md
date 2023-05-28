@@ -266,7 +266,7 @@ also be seen within the GIN model that makes use of LSPE.
 **Cellular random walks with boundary/co-boundary, upper and lower adjacency matrices improve cellular walk positional 
 encodings within GIN models.** From this set of experiments, we can note that the inclusion of all types of graph complex 
 traversing results in the lowest loss values. This is because a more detailed encoding of the node positions is created, 
-as it allows for the random walk to develop more concise relations between the complices.
+as it allows for the random walk to develop more concise relations between the complexes.
 
 **When using Cellular Random Walk on the original GIN and Gated GCN architectures, the boundary traversing method performed best.** 
 When comparing all types of traversing methods used, the implementation making use of the boundary/co-boundary adjacency 
