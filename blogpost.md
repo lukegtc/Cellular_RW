@@ -235,9 +235,10 @@ The results of all our experiments on different instances of Random Walk along w
 | 23 | GCN-LSPE | Random Walk |            Yes |                                        Boundary |     0.004 |   0.157 |   0.134979 |                         -0.12% | python -m src.train --model gated_gcn --use_pe ccrw --learnable_pe True --traverse_type boundary             |
 
 
-**LSPE improves the performance of GIN and Gated GCN.** The inclusion of LSPE improves the loss of the GIN architecture. This is in line with the results of the original paper (Dwivedi et al. (2022)). We see a significant improvement of 47.4\% over the vanilla GIN architecture without positional encoding and an improvement of 3.9\% over the GIN architecture with traditional random walk positional encoding. We can also see that by using cellular random walk initialization the GIN model has a boost of 5.4\%. The inclusion of more topological information provides a more robust positional embedding of the graph structure.
+**LSPE improves the performance of GIN and Gated GCN.** The inclusion of LSPE improves the loss of the GIN architecture. This is in line with the results of the original paper (Dwivedi et al. (2022)). We see a significant improvement of 53.79\% over the vanilla GIN architecture without positional encoding. The inclusion of more topological information provides a more robust positional embedding of the graph structure.
+ The use of LSPE in the gatedGCN model also resulted in a 52.1\% decrease in the loss.
 
-**Cellular RW improves GatedGCN.** The performance of the GatedGCN model improves by 15.5\% when cellular random walks are included in the positional encoding process. The same can be said for the Gated GCN model that does not employ the LSPE method. For this standard Gated GCN model, the test loss scores improve by 3.9\%. 
+**Cellular RW improves GatedGCN.** The performance of the GatedGCN model improves by 15.57\% when cellular random walks are included in the positional encoding process. The same can be said for the Gated GCN model that does not employ the LSPE method, which sees an improvement of 36.61\%. 
 
 **Random walk improves the baseline GIN.** The inclusion of a random walk positional encoding improves the performance of the GIN architecture across all loss categories. Although the GIN architecture is not explicitly mentioned in Dwivedi et al. (2022), they do conclude that positional encodings improve the results of GNN architectures. Our results fall in line with this conclusion as well.
 
