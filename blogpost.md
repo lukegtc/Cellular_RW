@@ -13,7 +13,7 @@ GNNs take as input a graph with node and edge features and compute a function th
 A popular subclass of GNNs for modeling graph-structured data are Message Passing GNNs (MP-GNNs), where nodes in the graph represent entities and edges represent relationships between them. This framework involves iteratively computing and passing messages between neighboring nodes, allowing them to update their internal state based on information from their neighbors. While this framework has been successful in a variety of applications, one limitation of MP-GNNs is their theoretical expressiveness bounded by the 1-WL test \cite{wl_test}, \cite{gnn_power}.
 
 MP-GNNs can consider non-isomorphic graphs (shown in Figure 1) as equivalent and struggle to effectively capture the underlying relationships which may result in similar hidden representations for nodes in similar neighbourhoods, and therefore lead to poor expressive power of the network. The absence of global structural positional information of nodes decreases the representation power of MP-GNNs to distinguish simple graph symmetries. Specifically, this plays a significant role in tasks that heavily rely on the graph structure, notably in domains such as molecular tasks.
-![Examples of non-isomorphic graphs that cannot be distinguished by 1-WL.](pictures/iso_graph.png)
+
 
 Various solutions have been introduced in order to overcome this shortcoming of MP-GNNs.
 One approach amounts to including structural information in the initial node features, this is done by using positional encodings (PE) to augment the initial expressivity of the nodes \cite{wang2022equivariant}.
@@ -88,17 +88,13 @@ In this work, we propose a novel initialization method for positional encodings.
 The initialization is done by considering the nearby nodes, we extend upon this idea by including different walking directions, which allow for a more complete representation of the underlying graph structure. 
 We define three additional types of random walk on top of the traditional one (\cite{lspe}). Figure 2 provides a visual representation of this process.
 
-```
-|First Image|Second Image|
-|:-:|:-:|
-|![First Image](pictures/low_adj.png)|![Second Image](pictures/up_adj.png)|
-```
-
-<p align="center">
-<img src="pictures/low_adj.png"> &nbsp;&nbsp;&nbsp;&nbsp; <img src="pictures/up_adj.png">  <img src="pictures/boundary_adj.png">
+<img src="pictures/low_adj.png" style="margin:0" alt>
 </p>
-
-![low_adj](pictures/low_adj.png) ![alt-text-2](pictures/up_adj.png) ![alt-text-2](pictures/boundary_adj.png) ![alt-text-2](pictures/combined_rw.png)
+    <em>Figure 2.</em> Lower adj
+</p> <img src="pictures/up_adj.png" style="margin:0" alt>
+</p>
+    <em>Figure 2.</em> upper adj
+</p>
 
 # Experiments
 |    Maximum Epochs    |  500 |
