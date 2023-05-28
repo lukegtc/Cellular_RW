@@ -23,8 +23,9 @@ An alternative approach involves integrating topological information from the un
 **Contribution.** In this work, we explore the effect of more meaningful structural encodings in the MP-GNN GIN (Xu et al., 2019) and Gated GCN (Bresson et al., 2018) models by combining the two aforementioned methods. First, we introduce a novel way to initialize the positional encodings that include more topological information, by including edges and cycles of lengths up to a point, extending beyond individual nodes. This inclusion will enable the network to capture higher-order structures more effectively. Second, we extend the original GIN and Gated GCN models with LSPE, to make use of these more detailed positional encodings and better capture the structural information of the graph within the training portion of the models.
 
 Our results indicate that the use of cellular complexes within the positional encodings of the graphs improves the loss values of GCN and GIN architectures as they provide a more detailed encoding of graphs by learning from the cellular complex random walk positional embeddings. This suggests that using a cellular random walk making use of cellular complexes is more effective than a simple random walk making use of only the node features.
-**Relevant work**
-**Background**
+### Relevant work
+
+### Background
 
 **PE and Random Walk**
 The expressive power of message-passing graph neural networks (MP-GNNs) is constrained by the Weisfeiler-Leman (WL) graph isomorphism test (Morris and Ritzert, 2021). This test makes use of a generated canonical form of each graph and compares the two. When these two canonical forms are not equivalent, it can be said that these two graphs are not equivalent. Despite being a powerful tool, the WL test has limitations, as it fails to detect certain graph substructures such as triangles or cycles of higher length, and cannot distinguish between non-isomorphic graphs with the same connectivity but different permutations of nodes (as shown in Figure 1). To some extent, this limitation can be overcome by creating more meaningful node embeddings that also consider their positional features (Wang et al., 2022).
@@ -70,7 +71,7 @@ $$
 **Simplicial Complexes (SC).** *Definition* (Nanda, 2021). <em> Let V be a non-empty vertex set. A simplicial complex $\mathcal{K}$ is a collection of nonempty subsets of V that contains all the singleton subsets of V and is closed under the operation of taking subsets. </em> \
 An element $\sigma \in \mathcal{K}$ is called a k-dimensional simplex.
 In graph neural networks, simplicial complexes can be used to capture higher-order interactions among nodes in a graph. For instance, nodes are 0-simplices, edges are 1-simplices, triangles as 2-simplices, and so on until some predefined n-dimensional simplex. A set of all simplexes within a graph is called a complex. Simplexes are a generalization of a graph in which three edges can form a triangular face, four triangles can form a tetrahedral volume, and so on. Edges only connect pairs of nodes. By constructing simplicial complexes from a graph, higher-order neighborhoods of a node can be defined, and these can be used to improve the performance of the model in various applications. There are different approaches to incorporating simplicial complexes into GNNs, such as using them as additional input features or defining higher-order message-passing schemes. 
-\
+\ \
 **Cellular Complexes (CC).**
 A cellular complex is a generalization of a simplicial complex in which faces, volumes, etc., are not restricted to triangles or tetrahedrons but may instead take any shape. This flexibility endows cellular complexes (CCs) with greater expressivity than simplicial complexes (SCs) (Papillon et al., 2023). A cell complex is constructed with a hierarchical gluing procedure. It can start with a set of vertices and then edges, but this can be generalized by gluing a closed two-dimensional disk to any simple cycle within the graph. By doing so, a graph can be viewed as a 2D regular cell complex. This process, which involves attaching the disks to the edges or cycles present in the graph, expands its dimensionality and creates a more comprehensive cellular structure. The resulting complex incorporates both the original graph and the added two-dimensional cells, allowing for a richer representation that can be exploited for a richer message-passing architecture (Bodnar et al., 2021).
 
@@ -92,7 +93,7 @@ More specifically, we use GIN-0 in our experiments, where $\epsilon$ is fixed to
 <p align="center">
     <em>Figure 1.</em> A visual representation of a GIN layer. (Dwivedi et al., 2020)
 </p>
-\\ \\
+\
 **Gated GCN.**
 The Gated Graph Convolutional Network (GCN) architecture is a derivation of the graph convolutional network proposed by Bresson et al. (2017) that incorporates gating mechanisms to capture more complex graph relationships. While traditional GCNs aggregate information from neighboring nodes by taking the sum of some weighted features and applying some linear transform, the Gated GCN makes use of residual connections in order to incorporate relevant information from previous layers. There is also a sigmoid non-linearity used as a gating mechanism within this model, along with a ReLU, which is used to determine whether or not certain information passing through a layer is considered relevant. Below is the equation for such a network, where the matrices $A,B,C$ signify MLPs within each of the Gated GCN layers.
 
@@ -116,7 +117,7 @@ A visual representation of a single GatedGCn layer is shown below.
 
 
 
-**Methodology**
+# Methodology
 In this work, we propose a novel initialization method for positional encodings. Many existing works inject positional information into the input layer of the Graph Neural Networks (GNNs) (Dwivedi et al., 2021; Kreuzer et al., 2021). However, recent results have highlighted the significance of positional encodings for enhancing the expressivity of GNNs (Srinivasan et al., 2020; Loukas et al., 2020; Murphy et al., 2019). The following section will introduce the new initialized Random Walk initialization.
 
 
@@ -137,22 +138,23 @@ We define three additional types of random walk on top of the traditional one (D
 <p align="center">
 <img src="pictures/boundary_adj.png" style="margin:0" alt>
 </p>
-<p align="center"> <em>Figure 4.</em> Lower adjacent random walk. The cell labeled in red is able to walk to the other cell as they share a lower dimensional cell in their boundary, the edge.
-</p> <img src="pictures/combined_rw.png" style="margin:0" alt>
+
+<p align="center"> 
+<img src="pictures/combined_rw.png" style="margin:0" alt>
 <p align="center">
     <em>Figure 5.</em> Combined cellular random walk.
 
 \
 **N-Cellular-RW.** In the initialization process we employ random walks on the upper and lower adjacent cells, defined in the background section. To establish connectivity, we construct the upper adjacency index which maps k-dimensional cells to k-dimensional cells and provides the (k+1)-cell through which these cells are connected. Similarly, we construct lower adjacency index maps that capture the lower adjacency relationships. For instance, in the case of edges, we can jump from one edge to the other if they have a cell in common. For vertices, this is possible if there is an edge in common, while for cells we do not have this as there is no higher dimensional shared cell. 
-\
+\ \
 **B-Cellular-RW.** This random walk is initialized exclusively Similarly to the upper/lower adjacency index matrix, we construct a boundary index matrix, where for vertices the values are zeroes as they do not have a boundary.
-\
+\ \
 **NB-Cellular RW.** Lastly, we combine the two aforementioned random walks. These two methods are combined by allowing the random walk process to step both up and down the dimensions of the cellular complexes. This means that a walk has the option to either step between cellular complexes in the same dimension, effectively creating a shortcut over other lower or higher dimensional complexes. A walk could also take an extended route, and make use of multiple different dimensions when mapping out the neighboring features. This process has the ability to create a more detailed positional embedding of the surrounding graph strcuture at some computational expense, as this process creates an even more connected graph than the previous two mentioned methods.
 
 **Inclusion of LSPE into GIN and GatedGCN architectures**
 
 The implementation of the LSPE into both the GIN and GatedGCN architectures required some modifications to the underlying models, as LSPE requires positional embeddings to be passed through the model as well. Edge features also had to be concatenated with the incoming sending and receiving node features.
-\
+\ \
 **GIN-LSPE.**
 Note that the matrices $A, B, C, D$ are MLPs. We can see that there are several residual connections throughout this model architecture, incorporating past nodal and positional information into the layers during updates. All incoming graph attributes are initially passed through an embedding layer. This includes both the node attributes $h$ and positional node embeddings $p$. 
 $$
@@ -165,7 +167,7 @@ $$
 $$
 p^{l+1} = p^l + ReLU(C^l ReLU(D^l (p^l + \sum_{j \in N(i)} p_i^l)))
 $$
-\
+\ \
 **Gated GCN-LSPE.**
 Note that all input in the below equations should initially be passed through an embedding layer that encodes positional information of all attributes used within the layers of this model. This includes the edge attributes $e$, and both the sending and receiving nodes, $h_i$ and $h_j$ resepctively. The layers $A,B,C,D,E$ are MLPs.
 $$
@@ -195,13 +197,13 @@ $$
 $$
 
 
-**Experiments+*
-We evaluate the impact of the inclusion of topological information in the random walk initialization by carrying out experiments with different settings. For all experiments, we employ the Graph Isomorphism Network (GIN) as our base model, as it provides a relatively simple architecture to evaluate the effectiveness of our LSPE and cellular complex random walk method. Additionally, we utilize the Gated Graph Convolutional Network (GatedGCN) as another baseline model, following the original LSPE paper by Xu et al. (2019) and Bresson et al. (2018). Both networks are implemented using PyTorch and evaluated on the ZINC molecular dataset (Xu et al., 2019; ZINC).An ablation study was conducted, with both the GIN and Gated GCN architectures, where the effects of the LSPE implementation and varying cellular random walk implementations making use of upper, lower, and boundary adjacency matrices were observed. The settings are presented below:
+# Experiments
+We evaluate the impact of the inclusion of topological information in the random walk initialization by carrying out experiments with different settings. For all experiments, we employ the Graph Isomorphism Network (GIN) as our base model, as it provides a relatively simple architecture to evaluate the effectiveness of our LSPE and cellular complex random walk method. Additionally, we utilize the Gated Graph Convolutional Network (GatedGCN) as another baseline model, following the original LSPE paper by Xu et al. (2019) and Bresson et al. (2018). Both networks are implemented using PyTorch and evaluated on the ZINC molecular dataset (Xu et al., 2019; ZINC).An ablation study was conducted, with both the GIN and Gated GCN architectures, where the effects of the LSPE implementation and varying cellular random walk implementations making use of upper, lower, and boundary adjacency matrices were observed. The settings are presented below.
 
 
 
 **Dataset**
-**ZINC.** The ZINC dataset used in this work is sourced from the ZINC database (ZINC) and consists of molecular structures with up to 38 heavy atoms. Following the methodology outlined in Dwivedi et al. (2022), a subset of 12,000 molecules is selected for experimentation. The ZINC dataset is a graph regression dataset, where the task is to predict the constrained solubility of each molecule. Constrained solubility is a fundamental chemical property in molecular design (Jin et al., 2019).
+The ZINC dataset used in this work is sourced from the ZINC database (ZINC) and consists of molecular structures with up to 38 heavy atoms. Following the methodology outlined in Dwivedi et al. (2022), a subset of 12,000 molecules is selected for experimentation. The ZINC dataset is a graph regression dataset, where the task is to predict the constrained solubility of each molecule. Constrained solubility is a fundamental chemical property in molecular design (Jin et al., 2019).
 
 A sample of this dataset is shown in Figure 6 below using the NetworkX package.
 <p  align="center"> 
@@ -215,8 +217,6 @@ Each of the nodes within these graphs has its own attribute, as do the edges con
 **Models**
 Table 1 presents the hyperparameters used in all the experiments. For the GIN and GIN LSPE models, we make use of a hidden dimension of 78, and 16 layers, while for Gated GCN and Gated GCN LSPE, the hidden dimension per layer is 60, while the number of layers used is 16. The total number of trainable parameters for the standard GCN and GIN models was roughly $505,000$, while for GIN and GCN models make use of LSPE it was roughly $532,000$. The batch size used for all models is 128. All models used were extremely small, requiring only 2.128 megabytes of storage.
 
-
-# Experiments
 |    Maximum Epochs    |  200 |
 |:--------------------:|:----:|
 |  Random Walk Length  |  20  |
@@ -263,5 +263,6 @@ losses are shown below.
 
 Within this project, we made modifications to existing graph neural network architectures with the objective of improving their performance on the ZINC dataset. Specifically, we modified a Graph Isomorphism Network (GIN) and a Gated Graph Convolutional Network (Gated GCN) to incorporate learned structural and positional encodings using the cellular complex random walk implementation proposed by Dwivedi et al. (2022). This implementation, which originally utilized node and edge attributes, was extended to include cellular complexes, resulting in a more comprehensive representation known as a "cellular complex random walk." By applying the random walk process to these two models, we demonstrated that the use of cellular random walks can enhance the performance of GIN and Gated GCN architectures. Furthermore, we showed that the integration of Learned Structural Positional Encodings (LSPE) into the GIN architecture significantly improved the loss values.
 
-**Future work.** Due to time constraints, our experiments were limited to the ZINC dataset. However, future extensions could involve utilizing non-molecular graph datasets such as IMDB-MULTI, IDBM-BINARY (Morris et al., 2020), and CIFAR10, following the approach outlined in Dwivedi et al. (2022). Additionally, it would be valuable to explore the application of LSPE with cellular complex random walks in a Convolutional Isomorphism Network (CIN) architecture, as this architecture has shown state-of-the-art performance when used with larger cell structures (Bodnar et al., 2021).
+### Future work. 
+Due to time constraints, our experiments were limited to the ZINC dataset. However, future extensions could involve utilizing non-molecular graph datasets such as IMDB-MULTI, IDBM-BINARY (Morris et al., 2020), and CIFAR10, following the approach outlined in Dwivedi et al. (2022). Additionally, it would be valuable to explore the application of LSPE with cellular complex random walks in a Convolutional Isomorphism Network (CIN) architecture, as this architecture has shown state-of-the-art performance when used with larger cell structures (Bodnar et al., 2021).
 # References
