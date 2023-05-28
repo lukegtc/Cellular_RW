@@ -274,7 +274,7 @@ matrices showed the biggest improvement over the original modes without any posi
 the fact that these matrices may strike a balance between the properties of the upper and lower adjacency matrices. Additionally,
 These boundary matrices may also provide the right amount of detailed information about the graphs, without forcing the model to 
 overfit on too much data, which would explain the higher loss values that the combination of upper, lower and boundary adjacency
-matrices yield (Bodnar et al., 2021a).
+matrices yield Bodnar et al., (2021a).
 
 # Conclusion
 
