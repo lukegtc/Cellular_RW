@@ -293,11 +293,17 @@ Network (Gated GCN) to incorporate learned structural and positional encodings u
 proposed by Dwivedi et al. (2022). This implementation, which originally utilized node and edge attributes, was extended to include 
 cellular complexes, resulting in a more comprehensive representation known as a "cellular complex random walk." By applying the random 
 walk process to these two models, we demonstrated that the use of cellular random walks can enhance the performance of GIN and Gated GCN 
-architectures. Furthermore, we showed that the integration of Learned Structural Positional Encodings (LSPE) into the GIN architecture 
-significantly improved the loss values.
+architectures. Furthermore, we showed that we were able to incorporate the cellular complex random walk into GNN models that 
+made use of LSPE successfully. With this combination, we were able to outperform the original GIN and Gated GCN models. We were 
+also able to outperform these models even when the made use of the original random walk positional encodings.
 
 ### Future work. 
-Due to time constraints, our experiments were limited to the ZINC dataset. However, future extensions could involve utilizing non-molecular graph datasets such as IMDB-MULTI, IDBM-BINARY (Morris et al., 2020), and CIFAR10, following the approach outlined in Dwivedi et al. (2022). Additionally, it would be valuable to explore the application of LSPE with cellular complex random walks in a Convolutional Isomorphism Network (CIN) architecture, as this architecture has shown state-of-the-art performance when used with larger cell structures (Bodnar et al., 2021).
+Due to time constraints, our experiments were limited to the ZINC dataset. However, future extensions could involve
+utilizing non-molecular graph datasets such as IMDB-MULTI, IDBM-BINARY (Morris et al., 2020), and CIFAR10, following 
+the approach outlined in Dwivedi et al. (2022). Additionally, it would be valuable to explore the application of LSPE 
+with cellular complex random walks in a Convolutional Isomorphism Network (CIN) architecture, as this architecture has
+shown state-of-the-art performance when used with larger cell structures (Bodnar et al., 2021). Additionally, our method allows for the 
+computation of all positional encodings at once, and is easily portable to the CIN architecture.
 # References
 [1] Cristian Bodnar et al. “Weisfeiler and lehman go cellular: Cw networks”. In: Advances in Neural
 Information Processing Systems 34 (2021), pp. 2625–2640.
