@@ -1,5 +1,5 @@
 
-# Random Walks go cellular
+# Random Walks Go Cellular
 
 Message Passing Graph Neural Networks are limited in their expressivity.
 They can consider non-isomorphic graphs as equivalent and struggle to effectively capture the underlying relationships which may result in similar hidden representations for nodes in similar neighborhoods and therefore lead to poor expressive power of the network. 
