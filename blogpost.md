@@ -1,11 +1,3 @@
----
-title: "My Document"
-bibliography: references.bib
-link-citations: true
----
-
-  
-
 # Introduction
 
 Graph Neural Networks (GNNs) have emerged as a powerful class of deep learning models for processing data that can be represented as graphs. GNNs have been applied to numerous domains ranging from quantum chemistry, recommender systems, antibacterial discovery, physics simulations, fake news detections, knowledge graphs, and natural language processing (Taub et al., 2023; Gladstone et al., 2023; Phan et al., 2023; Yasunaga et al., 2021; Wu et al., 2023).
