@@ -128,7 +128,7 @@ In this work, we propose a novel initialization method for positional encodings.
 ### Random Walk on cell complexes
 
 The initialization is done by considering the nearby nodes, we extend upon this idea by including different walking directions, which allow for a more complete representation of the underlying graph structure. 
-We define three additional types of random walk on top of the traditional one (Dwivedi et al., 2022). Figure 3 provides a visual representation of this process.
+We define three additional types of random walk on top of the traditional one (Dwivedi et al., 2022). The figures below provide a visual representation of this process.
 <p align="center">
 <img src="pictures/low_adj.png" style="margin:0" alt>
 
