@@ -62,7 +62,7 @@ Basic GIN experiment with no positional embeddings.
 
 ``` Running GIN
 
-python -m src.train.py
+python -m src.train
 
 ```
 
@@ -70,13 +70,13 @@ Basic GIN experiment with traditional Random Walk PE.
 
 ``` Running GIN with positional embeddings
 
-python -m src.train.py --use_pe rw
+python -m src.train --use_pe rw
 
 ```
 GIN with LSPE
 ``` Running GIN with LSPE
 
-python -m src.train.py --use_pe rw --learnable_pe True
+python -m src.train --use_pe rw --learnable_pe True
 
 ```
 
@@ -84,7 +84,7 @@ To run the experiments for different traverse types, change the value of --trave
 
 ``` Running GIN with upper adjacency
 
-python -m src.train.py --use_pe ccrw --traverse_type upper_lower_boundary
+python -m src.train --use_pe ccrw --traverse_type upper_lower_boundary
 
 ```
 
@@ -93,7 +93,7 @@ The same commands apply to the Gated GCN model, but remember to change the model
 
 ``` Running GCN
 
-python -m src.train.py --model gated_gcn
+python -m src.train --model gated_gcn
 
 ```
 ## Repository structure
