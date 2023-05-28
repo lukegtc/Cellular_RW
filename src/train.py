@@ -8,11 +8,11 @@ from torch_geometric.transforms import Compose
 
 import pytorch_lightning as pl
 
-from src.models.gin import GIN, GINLSPE
-from src.models.GatedGCN import GatedGCN, GatedGCNLSPE
-from src.config import parse_train_args
-from src.topology.cellular import LiftGraphToCC
-from src.topology.pe import AddRandomWalkPE, AddCellularRandomWalkPE, AppendCCRWPE, AppendRWPE
+from models.gin import GIN, GINLSPE
+from models.GatedGCN import GatedGCN, GatedGCNLSPE
+from config import parse_train_args
+from topology.cellular import LiftGraphToCC
+from topology.pe import AddRandomWalkPE, AddCellularRandomWalkPE, AppendCCRWPE, AppendRWPE
 
 
 class LitGNNModel(pl.LightningModule):
@@ -202,11 +202,13 @@ if __name__ == '__main__':
             model_params['feat_in'] += pe_features
 
     model = LitGNNModel(model_name, model_params, training_params, learnable_pe=args.learnable_pe)
-
+    logger = pl.loggers.TensorBoardLogger(args.log_dir, name=model_name)
+    csv_logger = pl.loggers.CSVLogger(args.log_dir, name=model_name)
     trainer = pl.Trainer(max_epochs=args.max_epochs,
                          accelerator=args.accelerator,
                          devices=args.devices,
                          log_every_n_steps=10,
-                         default_root_dir=args.trainer_root_dir)
+                         default_root_dir=args.trainer_root_dir,
+                         logger=[logger, csv_logger])
     trainer.fit(model, train_loader, val_loader, ckpt_path=args.ckpt_path)
     trainer.test(model, ckpt_path="best", dataloaders=test_loader)
