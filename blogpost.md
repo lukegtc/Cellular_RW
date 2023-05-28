@@ -129,6 +129,13 @@ In this work, we propose a novel initialization method for positional encodings.
 
 The initialization is done by considering the nearby nodes, we extend upon this idea by including different walking directions, which allow for a more complete representation of the underlying graph structure. 
 We define three additional types of random walk on top of the traditional one (Dwivedi et al., 2022). The figures below provide a visual representation of this process.
+
+**N-Cellular-RW.** In the initialization process we employ random walks on the upper and lower adjacent cells, defined in the background section. To establish connectivity, we construct the upper adjacency index which maps k-dimensional cells to k-dimensional cells and provides the (k+1)-cell through which these cells are connected. Similarly, we construct lower adjacency index maps that capture the lower adjacency relationships. For instance, in the case of edges, we can jump from one edge to the other if they have a cell in common. For vertices, this is possible if there is an edge in common, while for cells we do not have this as there is no higher dimensional shared cell. 
+
+**B-Cellular-RW.** This random walk is initialized exclusively Similarly to the upper/lower adjacency index matrix, we construct a boundary index matrix, where for vertices the values are zeroes as they do not have a boundary.
+
+**NB-Cellular RW.** Lastly, we combine the two aforementioned random walks. These two methods are combined by allowing the random walk process to step both up and down the dimensions of the cellular complexes. This means that a walk has the option to either step between cellular complexes in the same dimension, effectively creating a shortcut over other lower or higher dimensional complexes. A walk could also take an extended route, and make use of multiple different dimensions when mapping out the neighboring features. This process has the ability to create a more detailed positional embedding of the surrounding graph strcuture at some computational expense, as this process creates an even more connected graph than the previous two mentioned methods.
+
 <p align="center">
 <img src="pictures/low_adj.png" style="margin:0" alt>
 
@@ -147,13 +154,6 @@ We define three additional types of random walk on top of the traditional one (D
 <img src="pictures/combined_rw.png" style="margin:0" alt>
 <p align="center">
     <em>Figure 6.</em> Combined cellular random walk.
-
-\
-**N-Cellular-RW.** In the initialization process we employ random walks on the upper and lower adjacent cells, defined in the background section. To establish connectivity, we construct the upper adjacency index which maps k-dimensional cells to k-dimensional cells and provides the (k+1)-cell through which these cells are connected. Similarly, we construct lower adjacency index maps that capture the lower adjacency relationships. For instance, in the case of edges, we can jump from one edge to the other if they have a cell in common. For vertices, this is possible if there is an edge in common, while for cells we do not have this as there is no higher dimensional shared cell. 
-
-**B-Cellular-RW.** This random walk is initialized exclusively Similarly to the upper/lower adjacency index matrix, we construct a boundary index matrix, where for vertices the values are zeroes as they do not have a boundary.
-
-**NB-Cellular RW.** Lastly, we combine the two aforementioned random walks. These two methods are combined by allowing the random walk process to step both up and down the dimensions of the cellular complexes. This means that a walk has the option to either step between cellular complexes in the same dimension, effectively creating a shortcut over other lower or higher dimensional complexes. A walk could also take an extended route, and make use of multiple different dimensions when mapping out the neighboring features. This process has the ability to create a more detailed positional embedding of the surrounding graph strcuture at some computational expense, as this process creates an even more connected graph than the previous two mentioned methods.
 
 ### Inclusion of LSPE into GIN and GatedGCN architectures
 
