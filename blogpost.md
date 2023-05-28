@@ -14,8 +14,17 @@ An alternative approach involves integrating topological information from the un
 </p>
 
 ### Contribution.
-In this work, we explore the effect of more meaningful structural encodings in the MP-GNN GIN (Xu et al., 2019) and Gated GCN (Bresson et al., 2018) models by combining the two aforementioned methods. First, we introduce a novel way to initialize the positional encodings that include more topological information, by including edges and cycles of lengths up to a point, extending beyond individual nodes. This inclusion will enable the network to capture higher-order structures more effectively. Second, we extend the original GIN and Gated GCN models with LSPE, to make use of these more detailed positional encodings and better capture the structural information of the graph within the training portion of the models.
-Our results indicate that the use of cellular complexes within the positional encodings of the graphs improves the loss values of GCN and GIN architectures as they provide a more detailed encoding of graphs by learning from the cellular complex random walk positional embeddings. This suggests that using a cellular random walk making use of cellular complexes is more effective than a simple random walk making use of only the node features.
+In this work, we explore the effect of more meaningful structural encodings in the MP-GNN GIN (Xu et al., 2019) and Gated 
+GCN (Bresson et al., 2018) models by combining the two aforementioned methods. First, we introduce a novel way to initialize 
+the positional encodings that include more topological information, by including edges and cycles of lengths up to a point, 
+extending beyond individual nodes. This inclusion will enable the network to capture higher-order structures more effectively. 
+Second, we extend the original GIN and Gated GCN models with LSPE, to make use of these more detailed positional encodings 
+and better capture the structural information of the graph within the training portion of the models.
+Our results indicate that the use of cellular complexes within the positional encodings of the graphs improves the loss
+values of the vanilla GCN and GIN architectures as they provide a more detailed encoding of graphs by learning from the 
+cellular complex random walk positional embeddings. This suggests that using a cellular random walk making use of 
+cellular complexes is more effective than a simple random walk making use of only the node features. We additionally saw better
+results in the GIN architecture when LSPE was implemented, which was in line with the results of Dwivedi et al. (2022).
 
 ### Relevant work
 In this section, we provide a brief overview of relevant publications and research directions.
