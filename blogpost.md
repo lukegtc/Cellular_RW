@@ -53,10 +53,13 @@ Existing MP-GNNs that concatenate the PE with the input node features, follow th
 
 
 **Explicit topological features**
+
+
 **Simplicial Complexes (SC).** *Definition* (Nanda, 2021). <em> Let V be a non-empty vertex set. A simplicial complex $\mathcal{K}$ is a collection of nonempty subsets of V that contains all the singleton subsets of V and is closed under the operation of taking subsets. </em> \
 An element $\sigma \in \mathcal{K}$ is called a k-dimensional simplex.
 In graph neural networks, simplicial complexes can be used to capture higher-order interactions among nodes in a graph. For instance, nodes are 0-simplices, edges are 1-simplices, triangles as 2-simplices, and so on until some predefined n-dimensional simplex. A set of all simplexes within a graph is called a complex. Simplexes are a generalization of a graph in which three edges can form a triangular face, four triangles can form a tetrahedral volume, and so on. Edges only connect pairs of nodes. By constructing simplicial complexes from a graph, higher-order neighborhoods of a node can be defined, and these can be used to improve the performance of the model in various applications. There are different approaches to incorporating simplicial complexes into GNNs, such as using them as additional input features or defining higher-order message-passing schemes. 
-\ \
+
+
 **Cellular Complexes (CC).**
 A cellular complex is a generalization of a simplicial complex in which faces, volumes, etc., are not restricted to triangles or tetrahedrons but may instead take any shape. This flexibility endows cellular complexes (CCs) with greater expressivity than simplicial complexes (SCs) (Papillon et al., 2023). A cell complex is constructed with a hierarchical gluing procedure. It can start with a set of vertices and then edges, but this can be generalized by gluing a closed two-dimensional disk to any simple cycle within the graph. By doing so, a graph can be viewed as a 2D regular cell complex. This process, which involves attaching the disks to the edges or cycles present in the graph, expands its dimensionality and creates a more comprehensive cellular structure. The resulting complex incorporates both the original graph and the added two-dimensional cells, allowing for a richer representation that can be exploited for a richer message-passing architecture (Bodnar et al., 2021).
 
