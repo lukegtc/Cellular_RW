@@ -12,9 +12,9 @@ In this work, we explore the effect of more meaningful structural encodings in t
 
 
 ``` 
-git clone https://github.com/lukegtc/Deep_Learning_2_project.git
+git clone https://github.com/lukegtc/Cellular_RW.git
 
-cd Deep_Learning_2_project 
+cd Cellular_RW
 ``` 
 
 
