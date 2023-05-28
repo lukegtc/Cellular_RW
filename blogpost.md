@@ -252,3 +252,42 @@ Within this project, we made modifications to existing graph neural network arch
 ### Future work. 
 Due to time constraints, our experiments were limited to the ZINC dataset. However, future extensions could involve utilizing non-molecular graph datasets such as IMDB-MULTI, IDBM-BINARY (Morris et al., 2020), and CIFAR10, following the approach outlined in Dwivedi et al. (2022). Additionally, it would be valuable to explore the application of LSPE with cellular complex random walks in a Convolutional Isomorphism Network (CIN) architecture, as this architecture has shown state-of-the-art performance when used with larger cell structures (Bodnar et al., 2021).
 # References
+# Appendix 
+## Appendix A: MPGNN Architectures
+### Standard MPGNN
+ We construct a basic MP-GNN architecture, which update equations are defined as:
+<p align="center">
+    <img src="pictures/math_im7.png" style="margin:0" alt>
+</p>
+<p align="center">
+    <em>Equation 8.</em>
+</p>
+
+
+the $f_h$ and $f_e$ are linear layers, and $\mathcal{N}_i$ indicates the neighborhood of the node $i$. 
+### MPGNN-PE
+There are existing MP-GNNs that concatenate the positional
+encoding with the node features. Differently from LSPE-MP-GNNs (Dwivedi et al., 2022), the structural
+and positional information are merged together.
+<p align="center">
+    <img src="pictures/math_im8.png" style="margin:0" alt>
+</p>
+<p align="center">
+    <em>Equation 9.</em>
+</p>
+
+### MPGNN-LSPE
+
+The decoupling of positional and structural information is shown in the update
+equation that is defined as:
+<p align="center">
+    <img src="pictures/math_im9.png" style="margin:0" alt>
+</p>
+<p align="center">
+    <em>Equation 10.</em>
+</p>
+The novelty introduced by LSPE is the update of the positional representation, along with the
+concatenation with the node features.
+## Appendix B: Computational Resources
+In order to train our models for our set of experiments, we needed to make use of several different
+computational resources. These included a T5 GPU, a 1080Ti, as well as a 3060. These were not used in conjunction with one another.
