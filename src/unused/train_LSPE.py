@@ -7,7 +7,7 @@ import pytorch_lightning as pl
 import scipy.sparse as sp
 from torch_geometric.transforms import Compose
 
-from models.mpgnn import LSPE_MPGNN, LSPE_MPGNNHead, LapEigLoss
+from src.unused.mpgnn import LSPE_MPGNN, LSPE_MPGNNHead, LapEigLoss
 
 from topology.cellular import LiftGraphToCC
 from topology.pe import AddRandomWalkPE, AddCellularRandomWalkPE, AppendCCRWPE, AppendRWPE

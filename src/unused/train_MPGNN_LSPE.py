@@ -1,5 +1,4 @@
 import scipy.sparse as sp
-import scipy.sparse.linalg as linalg
 from pytorch_lightning.utilities.types import EVAL_DATALOADERS
 import torch
 import torch.nn as nn
@@ -9,11 +8,9 @@ from torch_geometric.data import DataLoader
 from torch_geometric.transforms import Compose
 import pytorch_lightning as pl
 
-from src.models.GatedGCN import GatedGCN_LSPE
-from src.models.MPGNN_LSPE import MPGNN_LSPE, LapEigLoss
+from src.unused.MPGNN_LSPE import MPGNN_LSPE, LapEigLoss
 from src.topology.cellular import LiftGraphToCC
 from src.topology.pe import AddRandomWalkPE, AddCellularRandomWalkPE, AppendCCRWPE, AppendRWPE
-from src.models.gin import GIN
 from src.config import parse_train_args
 
 
