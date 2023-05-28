@@ -94,6 +94,7 @@ More specifically, we use GIN-0 in our experiments, where $\epsilon$ is fixed to
     <em>Figure 1.</em> A visual representation of a GIN layer. (Dwivedi et al., 2020)
 </p>
 \
+
 **Gated GCN.**
 The Gated Graph Convolutional Network (GCN) architecture is a derivation of the graph convolutional network proposed by Bresson et al. (2017) that incorporates gating mechanisms to capture more complex graph relationships. While traditional GCNs aggregate information from neighboring nodes by taking the sum of some weighted features and applying some linear transform, the Gated GCN makes use of residual connections in order to incorporate relevant information from previous layers. There is also a sigmoid non-linearity used as a gating mechanism within this model, along with a ReLU, which is used to determine whether or not certain information passing through a layer is considered relevant. Below is the equation for such a network, where the matrices $A,B,C$ signify MLPs within each of the Gated GCN layers.
 
@@ -121,7 +122,7 @@ A visual representation of a single GatedGCn layer is shown below.
 In this work, we propose a novel initialization method for positional encodings. Many existing works inject positional information into the input layer of the Graph Neural Networks (GNNs) (Dwivedi et al., 2021; Kreuzer et al., 2021). However, recent results have highlighted the significance of positional encodings for enhancing the expressivity of GNNs (Srinivasan et al., 2020; Loukas et al., 2020; Murphy et al., 2019). The following section will introduce the new initialized Random Walk initialization.
 
 
-**Random Walk on cell complexes**
+### Random Walk on cell complexes
 
 The initialization is done by considering the nearby nodes, we extend upon this idea by including different walking directions, which allow for a more complete representation of the underlying graph structure. 
 We define three additional types of random walk on top of the traditional one (Dwivedi et al., 2022). Figure 3 provides a visual representation of this process.
@@ -146,15 +147,15 @@ We define three additional types of random walk on top of the traditional one (D
 
 \
 **N-Cellular-RW.** In the initialization process we employ random walks on the upper and lower adjacent cells, defined in the background section. To establish connectivity, we construct the upper adjacency index which maps k-dimensional cells to k-dimensional cells and provides the (k+1)-cell through which these cells are connected. Similarly, we construct lower adjacency index maps that capture the lower adjacency relationships. For instance, in the case of edges, we can jump from one edge to the other if they have a cell in common. For vertices, this is possible if there is an edge in common, while for cells we do not have this as there is no higher dimensional shared cell. 
-\ \
+
 **B-Cellular-RW.** This random walk is initialized exclusively Similarly to the upper/lower adjacency index matrix, we construct a boundary index matrix, where for vertices the values are zeroes as they do not have a boundary.
-\ \
+
 **NB-Cellular RW.** Lastly, we combine the two aforementioned random walks. These two methods are combined by allowing the random walk process to step both up and down the dimensions of the cellular complexes. This means that a walk has the option to either step between cellular complexes in the same dimension, effectively creating a shortcut over other lower or higher dimensional complexes. A walk could also take an extended route, and make use of multiple different dimensions when mapping out the neighboring features. This process has the ability to create a more detailed positional embedding of the surrounding graph strcuture at some computational expense, as this process creates an even more connected graph than the previous two mentioned methods.
 
-**Inclusion of LSPE into GIN and GatedGCN architectures**
+### Inclusion of LSPE into GIN and GatedGCN architectures
 
 The implementation of the LSPE into both the GIN and GatedGCN architectures required some modifications to the underlying models, as LSPE requires positional embeddings to be passed through the model as well. Edge features also had to be concatenated with the incoming sending and receiving node features.
-\ \
+
 **GIN-LSPE.**
 Note that the matrices $A, B, C, D$ are MLPs. We can see that there are several residual connections throughout this model architecture, incorporating past nodal and positional information into the layers during updates. All incoming graph attributes are initially passed through an embedding layer. This includes both the node attributes $h$ and positional node embeddings $p$. 
 $$
@@ -167,7 +168,7 @@ $$
 $$
 p^{l+1} = p^l + ReLU(C^l ReLU(D^l (p^l + \sum_{j \in N(i)} p_i^l)))
 $$
-\ \
+
 **Gated GCN-LSPE.**
 Note that all input in the below equations should initially be passed through an embedding layer that encodes positional information of all attributes used within the layers of this model. This includes the edge attributes $e$, and both the sending and receiving nodes, $h_i$ and $h_j$ resepctively. The layers $A,B,C,D,E$ are MLPs.
 $$
@@ -202,7 +203,7 @@ We evaluate the impact of the inclusion of topological information in the random
 
 
 
-**Dataset**
+### Dataset
 The ZINC dataset used in this work is sourced from the ZINC database (ZINC) and consists of molecular structures with up to 38 heavy atoms. Following the methodology outlined in Dwivedi et al. (2022), a subset of 12,000 molecules is selected for experimentation. The ZINC dataset is a graph regression dataset, where the task is to predict the constrained solubility of each molecule. Constrained solubility is a fundamental chemical property in molecular design (Jin et al., 2019).
 
 A sample of this dataset is shown in Figure 6 below using the NetworkX package.
@@ -214,9 +215,9 @@ A sample of this dataset is shown in Figure 6 below using the NetworkX package.
 
 Each of the nodes within these graphs has its own attribute, as do the edges connecting said nodes. To carry on the cellular setting experiments we add upper and lower adjacency indexes, boundary indexes, and cell features.
 
-**Models**
+### Experimental settings
 Table 1 presents the hyperparameters used in all the experiments. For the GIN and GIN LSPE models, we make use of a hidden dimension of 78, and 16 layers, while for Gated GCN and Gated GCN LSPE, the hidden dimension per layer is 60, while the number of layers used is 16. The total number of trainable parameters for the standard GCN and GIN models was roughly $505,000$, while for GIN and GCN models make use of LSPE it was roughly $532,000$. The batch size used for all models is 128. All models used were extremely small, requiring only 2.128 megabytes of storage.
-
+<center>
 |    Maximum Epochs    |  200 |
 |:--------------------:|:----:|
 |  Random Walk Length  |  20  |
@@ -227,12 +228,12 @@ Table 1 presents the hyperparameters used in all the experiments. For the GIN an
 |      LSPE lambda     | 1e-1 |
 |      LSPE alpha      |   1  |
 
-
+</center>
 
 
 # Results
-After conducting some small-scale tests based on a sample training set of 10,000 molecules, the resulting validation
-losses are shown below.
+The results of all our experiments on different instances of Random Walk along with performance without using PE are presented in the table below.
+
 
 |    |    Model |     PE type | Cellular in PE |                             Type of Random walk | Train acc | Val acc |   Test acc | Improvement over Vanilla Model | Command                                                                                                      |
 |----|---------:|------------:|---------------:|------------------------------------------------:|----------:|--------:|-----------:|-------------------------------:|--------------------------------------------------------------------------------------------------------------|
@@ -259,6 +260,16 @@ losses are shown below.
 | 21 | GCN-LSPE | Random Walk |            Yes |                                 Upper adjacency |     0.003 |   0.153 |   0.125357 |                          7.02% | python -m src.train --model gated_gcn --use_pe ccrw --learnable_pe True --traverse_type upper_adj            |
 | 22 | GCN-LSPE | Random Walk |            Yes |                                 Lower adjacency |     0.003 |   0.225 |   0.229040 |                        -69.89% | python -m src.train --model gated_gcn --use_pe ccrw --learnable_pe True --traverse_type lower_adj            |
 | 23 | GCN-LSPE | Random Walk |            Yes |                                        Boundary |     0.004 |   0.157 |   0.134979 |                         -0.12% | python -m src.train --model gated_gcn --use_pe ccrw --learnable_pe True --traverse_type boundary             |# Conclusion
+**LSPE improves the performance of GIN and Gated GCN.** The inclusion of LSPE improves the loss of the GIN architecture. This is in line with the results of the original paper (Dwivedi et al. (2022)). We see a significant improvement of 47.4\% over the vanilla GIN architecture without positional encoding and an improvement of 3.9\% over the GIN architecture with traditional random walk positional encoding. We can also see that by using cellular random walk initialization the GIN model has a boost of 5.4\%. The inclusion of more topological information provides a more robust positional embedding of the graph structure.
+
+**Cellular RW improves GatedGCN.** The performance of the GatedGCN model improves by 15.5\% when cellular random walks are included in the positional encoding process. The same can be said for the Gated GCN model that does not employ the LSPE method. For this standard Gated GCN model, the test loss scores improve by 3.9\%. 
+
+**Random walk improves the baseline GIN.** The inclusion of a random walk positional encoding improves the performance of the GIN architecture across all loss categories. Although the GIN architecture is not explicitly mentioned in Dwivedi et al. (2022), they do conclude that positional encodings improve the results of GNN architectures. Our results fall in line with this conclusion as well.
+
+**Cellular random walks with boundary/co-boundary, upper and lower adjacency matrices improve cellular walk positional encodings within GIN models.** From this set of experiments, we can note that the inclusion of all types of graph complex traversing results in the lowest loss values. This is because a more detailed encoding of the node positions is created, as it allows for the random walk to develop more concise relations between the complies.
+
+**When using Cellular Random Walk on the original GIN and Gated GCN architectures, the boundary traversing method performed best.** When comparing all types of traversing methods used, the implementation making use of the boundary/co-boundary adjacency matrices showed the biggest improvement over the original modes without any positional encodings. 
+
 # Conclusion
 
 Within this project, we made modifications to existing graph neural network architectures with the objective of improving their performance on the ZINC dataset. Specifically, we modified a Graph Isomorphism Network (GIN) and a Gated Graph Convolutional Network (Gated GCN) to incorporate learned structural and positional encodings using the cellular complex random walk implementation proposed by Dwivedi et al. (2022). This implementation, which originally utilized node and edge attributes, was extended to include cellular complexes, resulting in a more comprehensive representation known as a "cellular complex random walk." By applying the random walk process to these two models, we demonstrated that the use of cellular random walks can enhance the performance of GIN and Gated GCN architectures. Furthermore, we showed that the integration of Learned Structural Positional Encodings (LSPE) into the GIN architecture significantly improved the loss values.
