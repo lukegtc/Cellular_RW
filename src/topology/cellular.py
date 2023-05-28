@@ -81,7 +81,7 @@ class CellularComplex:
 
         boundary_index = torch.tensor(boundary_cols, dtype=torch.long).T
         coboundary_index = torch.tensor(coboundary_cols, dtype=torch.long).T
-        cell_dims = torch.tensor(cell_dims, dtype=torch.long)
+        cell_dims = torch.tensor(cell_dims, dtype=torch.long).reshape(-1, 1)
 
         cc = cls(cell_dims=cell_dims,
                  boundary_index=boundary_index,
@@ -92,30 +92,24 @@ class CellularComplex:
         return cc
 
     def compute_upper_adj_index(self):
-        #assert self.upper_adj_index is not None
-        # if index1 is same for two rows, then make an edge between index3 of those two rows
-        edge_ids = self.coboundary_index[:, 0]
-        cycle_ids = self.coboundary_index[:, 1]
-        mask = (cycle_ids[:-1] == cycle_ids[1:]).float()
-        indices = torch.where(mask == 1)
-        result = torch.stack([edge_ids[indices[0]], edge_ids[indices[0] + 1], cycle_ids[indices[0]]], dim=1)
-        result = result[result[:, 2] != 0]  # remove rows with node_id = 0
-        result = result.T.long()
-        self.upper_adj_index = result
+        k_dim_ids = self.coboundary_index[0, :].reshape(-1, 1)
+        kplus1_dim_ids = self.coboundary_index[1, :].reshape(-1, 1)
+        neighbors = torch.argwhere(kplus1_dim_ids == kplus1_dim_ids.T)
+        neighbors = neighbors[neighbors[:, 0] != neighbors[:, 1]]
+        n1 = neighbors[:, 0]
+        n2 = neighbors[:, 1]
+        upper_adj_index = torch.cat([k_dim_ids[n1], k_dim_ids[n2], kplus1_dim_ids[n1]], dim=1).T
+        self.upper_adj_index = upper_adj_index
 
     def compute_lower_adj_index(self):
-        # Lower adj is from edge node to edge node using a normal node and from cycle node to cycle node using an edge node
-        # edge_lower_adj = [[], [], []]
-        # index1 = edge1_id, index2 = edge2_id, index3 = node_id
-        edge_ids = self.boundary_index[0, :]
-        node_ids = self.boundary_index[1, :]
-        edge_lower_adj = []
-        for i in range(len(node_ids)):
-            for j in range(i+1, len(node_ids)):
-                if node_ids[i] == node_ids[j]:
-                    edge_lower_adj.append([edge_ids[i], edge_ids[j], node_ids[i]])
-        edge_lower_adj = torch.tensor(edge_lower_adj).T.long()
-        self.lower_adj_index = edge_lower_adj
+        kplus1_dim_ids = self.boundary_index[0, :].reshape(-1, 1)
+        k_dim_ids = self.boundary_index[1, :].reshape(-1, 1)
+        neighbors = torch.argwhere(k_dim_ids == k_dim_ids.T)
+        neighbors = neighbors[neighbors[:, 0] != neighbors[:, 1]]
+        n1 = neighbors[:, 0]
+        n2 = neighbors[:, 1]
+        lower_adj_index = torch.cat([kplus1_dim_ids[n1], kplus1_dim_ids[n2], k_dim_ids[n1]], dim=1).T
+        self.lower_adj_index = lower_adj_index
 
 
 class CellularComplexData(Data):
@@ -124,7 +118,7 @@ class CellularComplexData(Data):
         data['num_cells'] = cc.cell_dims.shape[0]
         data['cell_features'] = cc.cell_features
         data['cell_dims'] = cc.cell_dims
-        data['cell_batch'] = torch.zeros(data['num_cells'], dtype=torch.long)
+        data['cell_batch'] = torch.zeros((data['num_cells'], 1), dtype=torch.long)
         data['boundary_index'] = cc.boundary_index
         data['coboundary_index'] = cc.coboundary_index
         data['upper_adj_index'] = cc.upper_adj_index
@@ -134,6 +128,8 @@ class CellularComplexData(Data):
 
     def __inc__(self, key, value, *args, **kwargs):
         if key == 'boundary_index':
+            return self.num_cells
+        if key == 'coboundary_index':
             return self.num_cells
         if key == 'upper_adj_index':
             return self.num_cells

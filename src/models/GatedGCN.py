@@ -7,7 +7,7 @@ from torch_geometric.nn import global_add_pool
 
 class GatedGCN(nn.Module):
     """ GatedGCN model. """
-    def __init__(self, feat_in, num_hidden, num_layers):
+    def __init__(self, feat_in, num_hidden, num_layers, **kwargs):
         super().__init__()
         self.h_embed = nn.Linear(feat_in, num_hidden)
         self.layers = nn.ModuleList([GatedGCNLayer(num_hidden) for _ in range(num_layers)])
@@ -42,14 +42,14 @@ class GatedGCNLayer(nn.Module):
         return h
 
 
-class GatedGCN_LSPE(nn.Module):
+class GatedGCNLSPE(nn.Module):
     """ MP-GNN model with learnable structural and positional embeddings. """
-    def __init__(self, feat_in, pos_in, edge_feat_in, num_hidden, num_layers):
+    def __init__(self, feat_in, pos_in, edge_feat_in, num_hidden, num_layers, **kwargs):
         super().__init__()
         self.h_embed = nn.Linear(feat_in, num_hidden)
         self.e_embed = nn.Linear(edge_feat_in, num_hidden)
         self.p_embed = nn.Linear(pos_in, num_hidden)
-        self.layers = nn.ModuleList([GatedGCN_LSPELayer(num_hidden) for _ in range(num_layers)])
+        self.layers = nn.ModuleList([GatedGCNLSPELayer(num_hidden) for _ in range(num_layers)])
         self.readout = nn.Sequential(nn.Linear(2*num_hidden, num_hidden),
                                      nn.ReLU(),
                                      nn.Linear(num_hidden, 1))
@@ -63,15 +63,14 @@ class GatedGCN_LSPE(nn.Module):
             h_new, e_new, p_new = layer(h, e, p, edge_index)
             h = h + F.relu(h_new)
             e = e + F.relu(e_new)
-            p = p + F.relu(p_new)
+            p = p + F.tanh(p_new)
 
         h_agg = global_add_pool(h, batch)
         p_agg = global_add_pool(p, batch)
-        out = self.readout(torch.cat((h_agg, p_agg), dim=1)).squeeze()
-        return out, p_agg
+        return self.readout(torch.cat((h_agg, p_agg), dim=1)).squeeze()
 
 
-class GatedGCN_LSPELayer(nn.Module):
+class GatedGCNLSPELayer(nn.Module):
     """ MP-GNN layer handling structural and positional embeddings. """
     def __init__(self, num_hidden):
         super().__init__()

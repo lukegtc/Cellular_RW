@@ -7,7 +7,7 @@ from torch_geometric.nn import global_add_pool
 
 class GIN(nn.Module):
     """ GIN model. """
-    def __init__(self, feat_in, num_hidden, num_layers):
+    def __init__(self, feat_in, num_hidden, num_layers, **kwargs):
         super().__init__()
         self.h_embed = nn.Linear(feat_in, num_hidden)
         self.layers = nn.ModuleList([GINLayer(num_hidden) for _ in range(num_layers)])
@@ -44,7 +44,7 @@ class GINLayer(nn.Module):
 class GINLSPE(nn.Module):
     """ GIN model. """
 
-    def __init__(self, feat_in, pos_in, num_hidden, num_layers):
+    def __init__(self, feat_in, pos_in, num_hidden, num_layers, **kwargs):
         super().__init__()
         self.h_embed = nn.Linear(feat_in, num_hidden)
         self.p_embed = nn.Linear(pos_in, num_hidden)

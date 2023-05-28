@@ -19,7 +19,7 @@ def parse_train_args():
                            choices=['boundary', 'upper_adj', 'lower_adj', 'upper_lower', 'upper_lower_boundary'])
 
     # gnn name (we set params inside train script)
-    parser.add_argument('--model', type=str, default='gin', choices=['gin'])
+    parser.add_argument('--model', type=str, default='gin', choices=['gin', 'gated_gcn'])
 
     # training params
     parser.add_argument('--max_epochs', type=int, default=500)
