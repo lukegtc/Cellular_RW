@@ -242,20 +242,42 @@ The results of all our experiments on different instances of Random Walk along w
 | 23 | GCN-LSPE | Random Walk |            Yes |                                        Boundary |     0.004 |   0.157 |   0.134979 |                         -0.12% | python -m src.train --model gated_gcn --use_pe ccrw --learnable_pe True --traverse_type boundary             |
 
 
-**LSPE improves the performance of GIN and Gated GCN.** The inclusion of LSPE improves the loss of the GIN architecture. This is in line with the results of the original paper (Dwivedi et al. (2022)). We see a significant improvement of 53.79\% over the vanilla GIN architecture without positional encoding. The inclusion of more topological information provides a more robust positional embedding of the graph structure.
- The use of LSPE in the gatedGCN model also resulted in a 52.1\% decrease in the loss.
+**LSPE improves the performance of GIN and Gated GCN.** The inclusion of LSPE improves the loss of the GIN architecture. 
+This is in line with the results of the original paper (Dwivedi et al. (2022)). We see a significant improvement of 53.79\% 
+over the vanilla GIN architecture without positional encoding. The inclusion of more topological information provides a more 
+robust positional embedding of the graph structure.
+ The use of LSPE in the gatedGCN model also resulted in a 52.1\% decrease in the loss. 
 
-**Cellular RW improves GatedGCN.** The performance of the GatedGCN model improves by 15.57\% when cellular random walks are included in the positional encoding process. The same can be said for the Gated GCN model that does not employ the LSPE method, which sees an improvement of 36.61\%. 
+**Cellular RW improves GatedGCN.** The performance of the GatedGCN model improves by 15.57\% when cellular random walks 
+are included in the positional encoding process. The same can be said for the Gated GCN model that does not employ the 
+LSPE method, which sees an improvement of 36.61\%. When comparing the results of the GatedGCN model with and without any type
+of cellular random walk, we see that any type of this random walk improves the performance of the model. This is in line with 
+our original assumptions.
 
-**Random walk improves the baseline GIN.** The inclusion of a random walk positional encoding improves the performance of the GIN architecture across all loss categories. Although the GIN architecture is not explicitly mentioned in Dwivedi et al. (2022), they do conclude that positional encodings improve the results of GNN architectures. Our results fall in line with this conclusion as well.
+**Random walk improves the baseline GIN.** The inclusion of a random walk positional encoding improves the performance 
+of the GIN architecture across all loss categories. Although the GIN architecture is not explicitly mentioned in Dwivedi et al. (2022), 
+they do conclude that positional encodings improve the results of GNN architectures. Our results fall in line with this conclusion as well.
 
-**Cellular random walks with boundary/co-boundary, upper and lower adjacency matrices improve cellular walk positional encodings within GIN models.** From this set of experiments, we can note that the inclusion of all types of graph complex traversing results in the lowest loss values. This is because a more detailed encoding of the node positions is created, as it allows for the random walk to develop more concise relations between the complies.
 
-**When using Cellular Random Walk on the original GIN and Gated GCN architectures, the boundary traversing method performed best.** When comparing all types of traversing methods used, the implementation making use of the boundary/co-boundary adjacency matrices showed the biggest improvement over the original modes without any positional encodings. 
+**Cellular random walks with boundary/co-boundary, upper and lower adjacency matrices improve cellular walk positional 
+encodings within GIN models.** From this set of experiments, we can note that the inclusion of all types of graph complex 
+traversing results in the lowest loss values. This is because a more detailed encoding of the node positions is created, 
+as it allows for the random walk to develop more concise relations between the complies.
+
+**When using Cellular Random Walk on the original GIN and Gated GCN architectures, the boundary traversing method performed best.** 
+When comparing all types of traversing methods used, the implementation making use of the boundary/co-boundary adjacency 
+matrices showed the biggest improvement over the original modes without any positional encodings. 
 
 # Conclusion
 
-Within this project, we made modifications to existing graph neural network architectures with the objective of improving their performance on the ZINC dataset. Specifically, we modified a Graph Isomorphism Network (GIN) and a Gated Graph Convolutional Network (Gated GCN) to incorporate learned structural and positional encodings using the cellular complex random walk implementation proposed by Dwivedi et al. (2022). This implementation, which originally utilized node and edge attributes, was extended to include cellular complexes, resulting in a more comprehensive representation known as a "cellular complex random walk." By applying the random walk process to these two models, we demonstrated that the use of cellular random walks can enhance the performance of GIN and Gated GCN architectures. Furthermore, we showed that the integration of Learned Structural Positional Encodings (LSPE) into the GIN architecture significantly improved the loss values.
+Within this project, we made modifications to existing graph neural network architectures with the objective of improving 
+their performance on the ZINC dataset. Specifically, we modified a Graph Isomorphism Network (GIN) and a Gated Graph Convolutional 
+Network (Gated GCN) to incorporate learned structural and positional encodings using the cellular complex random walk implementation 
+proposed by Dwivedi et al. (2022). This implementation, which originally utilized node and edge attributes, was extended to include 
+cellular complexes, resulting in a more comprehensive representation known as a "cellular complex random walk." By applying the random 
+walk process to these two models, we demonstrated that the use of cellular random walks can enhance the performance of GIN and Gated GCN 
+architectures. Furthermore, we showed that the integration of Learned Structural Positional Encodings (LSPE) into the GIN architecture 
+significantly improved the loss values.
 
 ### Future work. 
 Due to time constraints, our experiments were limited to the ZINC dataset. However, future extensions could involve utilizing non-molecular graph datasets such as IMDB-MULTI, IDBM-BINARY (Morris et al., 2020), and CIFAR10, following the approach outlined in Dwivedi et al. (2022). Additionally, it would be valuable to explore the application of LSPE with cellular complex random walks in a Convolutional Isomorphism Network (CIN) architecture, as this architecture has shown state-of-the-art performance when used with larger cell structures (Bodnar et al., 2021).
