@@ -34,25 +34,22 @@ $$p_i^{RWPE} = [RW_{ii}, RW_{ii}^2, ..., RW_{ii}^k] \in  \mathbb{R}^k$$
 where $RW = AD^{-1}$, with $A$ being the adjacency matrix and $D$ the degree matrix. Dwivedi et al., 2022 differentiates this random walk method from the one originally proposed by Li et al. (2020) by making use of a lower complexity method that only includes the probability of a random walk landing back on itself ($ii$), as opposed to the probability of a random walk landing on any $j$ node. This method can be used due to the absence of sign invariance, which may pose a challenge for a Laplacian positional encoding (Dwivedi et al., 2020).
 Existing MP-GNNs that concatenate the PE with the input node features, follow the equation:
 
-   $$h_i^{\ell=0}=\mathrm{LL}_h\left(\left[\begin{array}{c}
-h_i^{\text {in }} \\
-p_i^{\text {in }}
-\end{array}\right]\right)
-$$
+<p align="center">
+    <img src="pictures/math_im1.png" style="margin:0" alt>
+</p>
+<p align="center">
+    <em>Equation 1.</em>
+</p>
 
 
 
 **LSPE.** Another approach, introduces the idea of learning positional representations alongside structural representations. For this purpose, a novel framework called MPGNNs-LSPE is introduced. The updated equations of this network are as follows:
-$$& h_i^{\ell+1}=f_h\left(\left[\begin{array}{c}
-h_i^{\ell} \\
-p_i^{\ell}
-\end{array}\right],\left\{\left[\begin{array}{c}
-h_j^{\ell} \\
-p_j^{\ell}
-\end{array}\right]\right\}_{j \in \mathcal{N}_i}, e_{i j}^{\ell}\right), h_i^{\ell+1}, h_i^{\ell} \in \mathbb{R}^d, \\
-& e_{i j}^{\ell+1}=f_e\left(h_i^{\ell}, h_j^{\ell}, e_{i j}^{\ell}\right), e_{i j}^{\ell+1}, e_{i j}^{\ell} \in \mathbb{R}^d \\
-& p_i^{\ell+1}=f_p\left(p_i^{\ell},\left\{p_j^{\ell}\right\}_{j \in \mathcal{N}_i}, e_{i j}^{\ell}\right), p_i^{\ell+1}, p_i^{\ell} \in \mathbb{R}^d
-$$
+<p align="center">
+    <img src="pictures/math_im2.png" style="margin:0" alt>
+</p>
+<p align="center">
+    <em>Equation 2.</em>
+</p>
 
 
 **Explicit topological features**
@@ -86,14 +83,18 @@ More specifically, we use GIN-0 in our experiments, where $\epsilon$ is fixed to
 **Gated GCN.**
 The Gated Graph Convolutional Network (GCN) architecture is a derivation of the graph convolutional network proposed by Bresson et al. (2017) that incorporates gating mechanisms to capture more complex graph relationships. While traditional GCNs aggregate information from neighboring nodes by taking the sum of some weighted features and applying some linear transform, the Gated GCN makes use of residual connections in order to incorporate relevant information from previous layers. There is also a sigmoid non-linearity used as a gating mechanism within this model, along with a ReLU, which is used to determine whether or not certain information passing through a layer is considered relevant. Below is the equation for such a network, where the matrices $A,B,C$ signify MLPs within each of the Gated GCN layers.
 
-$$\eta^{l} = \sigma(A^{l}$$
-h_i^l \\h_j^l
-$$
-$$
-$$
-h_i^{l+1} = h_i^l + ReLU(B^l h^l + \sum_{j \in N(i)} \eta^l C^l h_i^l)
-$$
-
+<p align="center">
+    <img src="pictures/math_im3.png" style="margin:0" alt>
+</p>
+<p align="center">
+    <em>Equation 3.</em>
+</p>
+<p align="center">
+    <img src="pictures/math_im4.png" style="margin:0" alt>
+</p>
+<p align="center">
+    <em>Equation 4.</em>
+</p>
 
 A visual representation of a single GatedGCn layer is shown below.
 <p align="center">
@@ -145,39 +146,21 @@ The implementation of the LSPE into both the GIN and GatedGCN architectures requ
 
 **GIN-LSPE.**
 Note that the matrices $A, B, C, D$ are MLPs. We can see that there are several residual connections throughout this model architecture, incorporating past nodal and positional information into the layers during updates. All incoming graph attributes are initially passed through an embedding layer. This includes both the node attributes $h$ and positional node embeddings $p$. 
-$$h^{l+1} = h^l + ReLU(A^l ReLU(B^l( \begin{bmatrix}
-    h^l\\p^l
-\end{bmatrix}+ \sum_{j \in N(i)} \begin{bmatrix}
-    h_i^l\\p_i^l
-\end{bmatrix})))
-$$
-$$p^{l+1} = p^l + ReLU(C^l ReLU(D^l (p^l + \sum_{j \in N(i)} p_i^l)))
-$$
+<p align="center">
+    <img src="pictures/math_im5.png" style="margin:0" alt>
+</p>
+<p align="center">
+    <em>Equation 5.</em>
+</p>
 
 **Gated GCN-LSPE.**
 Note that all input in the below equations should initially be passed through an embedding layer that encodes positional information of all attributes used within the layers of this model. This includes the edge attributes $e$, and both the sending and receiving nodes, $h_i$ and $h_j$ resepctively. The layers $A,B,C,D,E$ are MLPs.
-$$\hat{\eta}_{ij} = \sigma(A^l\begin{bmatrix}
-h_i^l \\h_j^l \\e_{ij}
-\end{bmatrix})
-$$
-$$\eta_{ij} = \frac{\hat{\eta}_{ij}}{\sum \hat{\eta}_{ij}}
-$$
-
-$$h^{l+1} = h^l + ReLU(
-B^l \begin{bmatrix}
-h_j^l\\p_j^l    
-\end{bmatrix} + \sum_{j \in N(i)}\eta_i C^l \begin{bmatrix}
-h_i^l\\p_i^l    
-\end{bmatrix})
-$$
-$$e^{l+1} = e^l + ReLU(\hat{\eta_{ij}})
-$$
-$$p^{l+1} = p^l + ReLU(E^l h + \sum_{j \in N(i)}\eta D^l\begin{bmatrix}
-    p_i^l\\
-\end{bmatrix})
-$$
-
-
+<p align="center">
+    <img src="pictures/math_im6.png" style="margin:0" alt>
+</p>
+<p align="center">
+    <em>Equation 6.</em>
+</p>
 # Experiments
 We evaluate the impact of the inclusion of topological information in the random walk initialization by carrying out experiments with different settings. For all experiments, we employ the Graph Isomorphism Network (GIN) as our base model, as it provides a relatively simple architecture to evaluate the effectiveness of our LSPE and cellular complex random walk method. Additionally, we utilize the Gated Graph Convolutional Network (GatedGCN) as another baseline model, following the original LSPE paper by Xu et al. (2019) and Bresson et al. (2018). Both networks are implemented using PyTorch and evaluated on the ZINC molecular dataset (Xu et al., 2019; ZINC).An ablation study was conducted, with both the GIN and Gated GCN architectures, where the effects of the LSPE implementation and varying cellular random walk implementations making use of upper, lower, and boundary adjacency matrices were observed. The settings are presented below.
 
