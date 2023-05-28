@@ -14,6 +14,12 @@ A popular subclass of GNNs for modeling graph-structured data are Message Passin
 
 Various solutions have been introduced to overcome this shortcoming of MP-GNNs. One approach amounts to including structural information in the initial node features, done by using positional encodings (PE) to augment the initial expressivity of the nodes (Wang et al., 2022). A novel framework has been proposed (Dwivedi et al., 2022), following the integration of positional information to node features, in which GNNs are able to separately learn both structural and positional representations at the same time.
 An alternative approach involves integrating topological information from the underlying graph. This is achieved by considering the graph's structure as explicit features (Bodnar et al., 2021). By considering any-dimensional cell (e.g., rings, edges), a more intricate neighborhood structure is created, allowing for the distinction of more cases of graph isomorphism.
+<p align="center">
+    <img src="pictures/iso_graphs.png" style="margin:0" alt>
+</p>
+<p align="center">
+    <em>Figure 1.</em>Examples of non-isomorphic graphs that cannot be distinguished by 1-WL.
+</p>
 
 ### Contribution.
 In this work, we explore the effect of more meaningful structural encodings in the MP-GNN GIN (Xu et al., 2019) and Gated GCN (Bresson et al., 2018) models by combining the two aforementioned methods. First, we introduce a novel way to initialize the positional encodings that include more topological information, by including edges and cycles of lengths up to a point, extending beyond individual nodes. This inclusion will enable the network to capture higher-order structures more effectively. Second, we extend the original GIN and Gated GCN models with LSPE, to make use of these more detailed positional encodings and better capture the structural information of the graph within the training portion of the models.
@@ -87,7 +93,7 @@ More specifically, we use GIN-0 in our experiments, where $\epsilon$ is fixed to
     <img src="pictures/gin.png" style="margin:0" alt>
 </p>
 <p align="center">
-    <em>Figure 1.</em> A visual representation of a GIN layer. (Dwivedi et al., 2020)
+    <em>Figure 2.</em> A visual representation of a GIN layer. (Dwivedi et al., 2020)
 </p>
 \
 
@@ -109,7 +115,7 @@ A visual representation of a single GatedGCn layer is shown below.
     <img src="pictures/gated_gcn.png" style="margin:0" alt>
 </p>
 <p align="center">
-    <em>Figure 2.</em> A gated GCN layer. (Dwivedi et al., 2020)
+    <em>Figure 3.</em> A gated GCN layer. (Dwivedi et al., 2020)
 </p>
 
 
@@ -126,12 +132,12 @@ We define three additional types of random walk on top of the traditional one (D
 <img src="pictures/low_adj.png" style="margin:0" alt>
 
 <p align="center">
-    <em>Figure 2.</em> Lower adjacent random walk. The cell labeled in red is able to walk to the other cell as they share a lower dimensional cell in their boundary, the edge.
+    <em>Figure 4.</em> Lower adjacent random walk. The cell labeled in red is able to walk to the other cell as they share a lower dimensional cell in their boundary, the edge.
 <p align="center">
 <img src="pictures/up_adj.png" style="margin:0" alt>
 </p>
 <p align="center">
-<em>Figure 3.</em> Boundary adjacent random walk. The edge labeled in red is able to walk to the other edges through the nodes.
+<em>Figure 5.</em> Boundary adjacent random walk. The edge labeled in red is able to walk to the other edges through the nodes.
 <p align="center">
 <img src="pictures/boundary_adj.png" style="margin:0" alt>
 </p>
@@ -139,7 +145,7 @@ We define three additional types of random walk on top of the traditional one (D
 <p align="center"> 
 <img src="pictures/combined_rw.png" style="margin:0" alt>
 <p align="center">
-    <em>Figure 5.</em> Combined cellular random walk.
+    <em>Figure 6.</em> Combined cellular random walk.
 
 \
 **N-Cellular-RW.** In the initialization process we employ random walks on the upper and lower adjacent cells, defined in the background section. To establish connectivity, we construct the upper adjacency index which maps k-dimensional cells to k-dimensional cells and provides the (k+1)-cell through which these cells are connected. Similarly, we construct lower adjacency index maps that capture the lower adjacency relationships. For instance, in the case of edges, we can jump from one edge to the other if they have a cell in common. For vertices, this is possible if there is an edge in common, while for cells we do not have this as there is no higher dimensional shared cell. 
@@ -207,7 +213,7 @@ A sample of this dataset is shown in Figure 6 below using the NetworkX package.
 <img  src="pictures/graphrep.png"  style="margin:0"  alt>
 
 <p  align="center">
-<em>Figure 6.</em> A sample molecule from the ZINC dataset.
+<em>Figure 7.</em> A sample molecule from the ZINC dataset.
 
 Each of the nodes within these graphs has its own attribute, as do the edges connecting said nodes. To carry on the cellular setting experiments we add upper and lower adjacency indexes, boundary indexes, and cell features.
 
