@@ -1,5 +1,5 @@
 
-# Random Walks Go Cellular
+# Random Walks Go Cellular : CRW-PE
 
 Message Passing Graph Neural Networks are limited in their expressivity.
 They can consider non-isomorphic graphs as equivalent and struggle to effectively capture the underlying relationships 
