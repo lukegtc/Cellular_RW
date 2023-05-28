@@ -8,11 +8,11 @@ from torch_geometric.transforms import Compose
 
 import pytorch_lightning as pl
 
-from models.gin import GIN, GINLSPE
-from models.GatedGCN import GatedGCN, GatedGCNLSPE
-from config import parse_train_args
-from topology.cellular import LiftGraphToCC
-from topology.pe import AddRandomWalkPE, AddCellularRandomWalkPE, AppendCCRWPE, AppendRWPE
+from src.models.gin import GIN, GINLSPE
+from src.models.GatedGCN import GatedGCN, GatedGCNLSPE
+from src.config import parse_train_args
+from src.topology.cellular import LiftGraphToCC
+from src.topology.pe import AddRandomWalkPE, AddCellularRandomWalkPE, AppendCCRWPE, AppendRWPE
 
 
 class LitGNNModel(pl.LightningModule):
@@ -101,6 +101,8 @@ class LitGNNModel(pl.LightningModule):
     def on_test_epoch_end(self) -> None:
         if self.trainer.sanity_checking:
             return
+        test_loss = self.trainer.callback_metrics['test_loss']
+        print(f'\nCurrent test loss {test_loss}')
 
     def test_dataloader(self):
         return super().test_dataloader()
