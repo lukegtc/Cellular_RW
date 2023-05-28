@@ -35,7 +35,7 @@ where $RW = AD^{-1}$, with $A$ being the adjacency matrix and $D$ the degree mat
 Existing MP-GNNs that concatenate the PE with the input node features, follow the equation:
 
 <p align="center">
-    <img src="pictures/math_im1.png" style="margin:0" alt>
+    <img src="pictures/math_im0.png" style="margin:0" alt>
 </p>
 <p align="center">
     <em>Equation 1.</em>
@@ -45,7 +45,7 @@ Existing MP-GNNs that concatenate the PE with the input node features, follow th
 
 **LSPE.** Another approach, introduces the idea of learning positional representations alongside structural representations. For this purpose, a novel framework called MPGNNs-LSPE is introduced. The updated equations of this network are as follows:
 <p align="center">
-    <img src="pictures/math_im2.png" style="margin:0" alt>
+    <img src="pictures/math_im1.png" style="margin:0" alt>
 </p>
 <p align="center">
     <em>Equation 2.</em>
@@ -70,9 +70,13 @@ The boundary adjacent cells are defined as the lower-dimensional cells on the bo
 
 **GIN and GatedGCN architectures**
 **GIN.** The Graph Isomorphism Network (GIN) is a neural architecture that has discriminative and representational power equal to the power of the Weisfeiler-Lehman (WL) test (Xu et al., 2019; Morris and Ritzert, 2021). GIN updates the node representations using the following equation:
-\
-    $$h_v^{(k)}=\operatorname{MLP}^{(k)}\left(\left(1+\epsilon^{(k)}\right) \cdot h_v^{(k-1)}+\sum_{u \in \mathcal{N}(v)} h_u^{(k-1)}\right)$$
-\
+<p align="center">
+    <img src="pictures/math_im2.png" style="margin:0" alt>
+</p>
+<p align="center">
+    <em>Equation 3.</em>
+</p>
+
 More specifically, we use GIN-0 in our experiments, where $\epsilon$ is fixed to 0. As explained by the original authors, GIN-0 generalizes well and outperforms GIN-$\epsilon$ in test accuracy.
 
 <p align="center">
@@ -81,7 +85,8 @@ More specifically, we use GIN-0 in our experiments, where $\epsilon$ is fixed to
 <p align="center">
     <em>Figure 2.</em> A visual representation of a GIN layer. (Dwivedi et al., 2020)
 </p>
-\
+
+
 
 **Gated GCN.**
 The Gated Graph Convolutional Network (GCN) architecture is a derivation of the graph convolutional network proposed by Bresson et al. (2017) that incorporates gating mechanisms to capture more complex graph relationships. While traditional GCNs aggregate information from neighboring nodes by taking the sum of some weighted features and applying some linear transform, the Gated GCN makes use of residual connections in order to incorporate relevant information from previous layers. There is also a sigmoid non-linearity used as a gating mechanism within this model, along with a ReLU, which is used to determine whether or not certain information passing through a layer is considered relevant. Below is the equation for such a network, where the matrices $A,B,C$ signify MLPs within each of the Gated GCN layers.
@@ -90,13 +95,13 @@ The Gated Graph Convolutional Network (GCN) architecture is a derivation of the 
     <img src="pictures/math_im3.png" style="margin:0" alt>
 </p>
 <p align="center">
-    <em>Equation 3.</em>
+    <em>Equation 4.</em>
 </p>
 <p align="center">
     <img src="pictures/math_im4.png" style="margin:0" alt>
 </p>
 <p align="center">
-    <em>Equation 4.</em>
+    <em>Equation 5.</em>
 </p>
 
 A visual representation of a single GatedGCn layer is shown below.
@@ -153,7 +158,7 @@ Note that the matrices $A, B, C, D$ are MLPs. We can see that there are several 
     <img src="pictures/math_im5.png" style="margin:0" alt>
 </p>
 <p align="center">
-    <em>Equation 5.</em>
+    <em>Equation 6.</em>
 </p>
 
 **Gated GCN-LSPE.**
@@ -162,8 +167,9 @@ Note that all input in the below equations should initially be passed through an
     <img src="pictures/math_im6.png" style="margin:0" alt>
 </p>
 <p align="center">
-    <em>Equation 6.</em>
+    <em>Equation 7.</em>
 </p>
+
 # Experiments
 We evaluate the impact of the inclusion of topological information in the random walk initialization by carrying out experiments with different settings. For all experiments, we employ the Graph Isomorphism Network (GIN) as our base model, as it provides a relatively simple architecture to evaluate the effectiveness of our LSPE and cellular complex random walk method. Additionally, we utilize the Gated Graph Convolutional Network (GatedGCN) as another baseline model, following the original LSPE paper by Xu et al. (2019) and Bresson et al. (2018). Both networks are implemented using PyTorch and evaluated on the ZINC molecular dataset (Xu et al., 2019; ZINC).An ablation study was conducted, with both the GIN and Gated GCN architectures, where the effects of the LSPE implementation and varying cellular random walk implementations making use of upper, lower, and boundary adjacency matrices were observed. The settings are presented below.
 
@@ -184,6 +190,7 @@ Each of the nodes within these graphs has its own attribute, as do the edges con
 ### Experimental settings
 Table 1 presents the hyperparameters used in all the experiments. For the GIN and GIN LSPE models, we make use of a hidden dimension of 78, and 16 layers, while for Gated GCN and Gated GCN LSPE, the hidden dimension per layer is 60, while the number of layers used is 16. The total number of trainable parameters for the standard GCN and GIN models was roughly $505,000$, while for GIN and GCN models make use of LSPE it was roughly $532,000$. The batch size used for all models is 128. All models used were extremely small, requiring only 2.128 megabytes of storage.
 <center>
+
 |    Maximum Epochs    |  200 |
 |:--------------------:|:----:|
 |  Random Walk Length  |  20  |
