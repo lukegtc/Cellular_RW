@@ -253,13 +253,13 @@ The results of all our experiments on different instances of Random Walk along w
 
 **LSPE improves the performance of GIN and Gated GCN.** The inclusion of LSPE improves the loss of the GIN architecture. 
 This is in line with the results of the original paper (Dwivedi et al. (2022)). We see a significant improvement of 53.79\% 
-over the vanilla GIN architecture without positional encoding. The inclusion of more topological information provides a more 
+over the vanilla GIN architecture without positional encoding when basic random walk and LSPE are included. The inclusion of more topological information provides a more 
 robust positional embedding of the graph structure.
  The use of LSPE in the gatedGCN model also resulted in a 52.1\% decrease in the loss. 
 
-**Cellular RW improves GatedGCN.** The performance of the GatedGCN model improves by 15.57\% when cellular random walks 
+**Cellular RW improves GatedGCN.** The performance of the GatedGCN model with LSPE improves by 15.57\% when cellular random walks 
 are included in the positional encoding process. The same can be said for the Gated GCN model that does not employ the 
-LSPE method, which sees an improvement of 36.61\%. When comparing the results of the GatedGCN model with and without any type
+LSPE method, which sees an improvement of 36.61\%. When comparing the results of the GatedGCN model without LSPE with and without any type
 of cellular random walk, we see that any type of this random walk improves the performance of the model. This is in line with 
 our original assumptions.
 
