@@ -255,18 +255,26 @@ of cellular random walk, we see that any type of this random walk improves the p
 our original assumptions.
 
 **Random walk improves the baseline GIN.** The inclusion of a random walk positional encoding improves the performance 
-of the GIN architecture across all loss categories. Although the GIN architecture is not explicitly mentioned in Dwivedi et al. (2022), 
-they do conclude that positional encodings improve the results of GNN architectures. Our results fall in line with this conclusion as well.
+of the GIN architecture across all loss categories. Although the GIN architecture is not explicitly mentioned in Dwivedi 
+et al. (2022), 
+they do conclude that positional encodings improve the results of GNN architectures. Our results fall in line with this 
+conclusion as well. Additionally, we see a slight improvement over the GIN model with random walk when cellular random walk is implemented instead
+but only when the traverse type is a boundary, or when it includes all types of adjacency matrices. Similarly, this can 
+also be seen within the GIN model that makes use of LSPE.
 
 
 **Cellular random walks with boundary/co-boundary, upper and lower adjacency matrices improve cellular walk positional 
 encodings within GIN models.** From this set of experiments, we can note that the inclusion of all types of graph complex 
 traversing results in the lowest loss values. This is because a more detailed encoding of the node positions is created, 
-as it allows for the random walk to develop more concise relations between the complies.
+as it allows for the random walk to develop more concise relations between the complices.
 
 **When using Cellular Random Walk on the original GIN and Gated GCN architectures, the boundary traversing method performed best.** 
 When comparing all types of traversing methods used, the implementation making use of the boundary/co-boundary adjacency 
-matrices showed the biggest improvement over the original modes without any positional encodings. 
+matrices showed the biggest improvement over the original modes without any positional encodings. This improvement comes from
+the fact that these matrices may strike a balance between the properties of the upper and lower adjacency matrices. Additionally,
+These boundary matrices may also provide the right amount of detailed information about the graphs, without forcing the model to 
+overfit on too much data, which would explain the higher loss values that the combination of upper, lower and boundary adjacency
+matrices yield.
 
 # Conclusion
 
