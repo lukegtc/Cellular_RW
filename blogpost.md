@@ -30,14 +30,11 @@ In GNNs, nodes can be assigned an index positional encoding; however, this assig
 
 A random walk is defined in the following equation.
 
-$$
-    p_i^{RWPE} = [RW_{ii}, RW_{ii}^2, ..., RW_{ii}^k] \in  \mathbb{R}^k
-$$
+$$p_i^{RWPE} = [RW_{ii}, RW_{ii}^2, ..., RW_{ii}^k] \in  \mathbb{R}^k$$
 where $RW = AD^{-1}$, with $A$ being the adjacency matrix and $D$ the degree matrix. Dwivedi et al., 2022 differentiates this random walk method from the one originally proposed by Li et al. (2020) by making use of a lower complexity method that only includes the probability of a random walk landing back on itself ($ii$), as opposed to the probability of a random walk landing on any $j$ node. This method can be used due to the absence of sign invariance, which may pose a challenge for a Laplacian positional encoding (Dwivedi et al., 2020).
 Existing MP-GNNs that concatenate the PE with the input node features, follow the equation:
 
-   $$
-h_i^{\ell=0}=\mathrm{LL}_h\left(\left[\begin{array}{c}
+   $$h_i^{\ell=0}=\mathrm{LL}_h\left(\left[\begin{array}{c}
 h_i^{\text {in }} \\
 p_i^{\text {in }}
 \end{array}\right]\right)
@@ -46,18 +43,15 @@ $$
 
 
 **LSPE.** Another approach, introduces the idea of learning positional representations alongside structural representations. For this purpose, a novel framework called MPGNNs-LSPE is introduced. The updated equations of this network are as follows:
-$$
-    \begin{aligned}
-        & h_i^{\ell+1}=f_h\left(\left[\begin{array}{c}
-        h_i^{\ell} \\
-        p_i^{\ell}
-        \end{array}\right],\left\{\left[\begin{array}{c}
-        h_j^{\ell} \\
-        p_j^{\ell}
-        \end{array}\right]\right\}_{j \in \mathcal{N}_i}, e_{i j}^{\ell}\right), h_i^{\ell+1}, h_i^{\ell} \in \mathbb{R}^d, \\
-        & e_{i j}^{\ell+1}=f_e\left(h_i^{\ell}, h_j^{\ell}, e_{i j}^{\ell}\right), e_{i j}^{\ell+1}, e_{i j}^{\ell} \in \mathbb{R}^d \\
-        & p_i^{\ell+1}=f_p\left(p_i^{\ell},\left\{p_j^{\ell}\right\}_{j \in \mathcal{N}_i}, e_{i j}^{\ell}\right), p_i^{\ell+1}, p_i^{\ell} \in \mathbb{R}^d
-    \end{aligned}
+$$& h_i^{\ell+1}=f_h\left(\left[\begin{array}{c}
+h_i^{\ell} \\
+p_i^{\ell}
+\end{array}\right],\left\{\left[\begin{array}{c}
+h_j^{\ell} \\
+p_j^{\ell}
+\end{array}\right]\right\}_{j \in \mathcal{N}_i}, e_{i j}^{\ell}\right), h_i^{\ell+1}, h_i^{\ell} \in \mathbb{R}^d, \\
+& e_{i j}^{\ell+1}=f_e\left(h_i^{\ell}, h_j^{\ell}, e_{i j}^{\ell}\right), e_{i j}^{\ell+1}, e_{i j}^{\ell} \in \mathbb{R}^d \\
+& p_i^{\ell+1}=f_p\left(p_i^{\ell},\left\{p_j^{\ell}\right\}_{j \in \mathcal{N}_i}, e_{i j}^{\ell}\right), p_i^{\ell+1}, p_i^{\ell} \in \mathbb{R}^d
 $$
 
 
@@ -80,7 +74,7 @@ The boundary adjacent cells are defined as the lower-dimensional cells on the bo
 **GIN and GatedGCN architectures**
 **GIN.** The Graph Isomorphism Network (GIN) is a neural architecture that has discriminative and representational power equal to the power of the Weisfeiler-Lehman (WL) test (Xu et al., 2019; Morris and Ritzert, 2021). GIN updates the node representations using the following equation:
 \
-    $$h_v^{(k)}=\operatorname{MLP}^{(k)}\left(\left(1+\epsilon^{(k)}\right) \cdot h_v^{(k-1)}+\sum_{u \in \mathcal{N}(v)} h_u^{(k-1)}\right) .$$
+    $$h_v^{(k)}=\operatorname{MLP}^{(k)}\left(\left(1+\epsilon^{(k)}\right) \cdot h_v^{(k-1)}+\sum_{u \in \mathcal{N}(v)} h_u^{(k-1)}\right)$$
 \
 More specifically, we use GIN-0 in our experiments, where $\epsilon$ is fixed to 0. As explained by the original authors, GIN-0 generalizes well and outperforms GIN-$\epsilon$ in test accuracy.
 
@@ -95,8 +89,7 @@ More specifically, we use GIN-0 in our experiments, where $\epsilon$ is fixed to
 **Gated GCN.**
 The Gated Graph Convolutional Network (GCN) architecture is a derivation of the graph convolutional network proposed by Bresson et al. (2017) that incorporates gating mechanisms to capture more complex graph relationships. While traditional GCNs aggregate information from neighboring nodes by taking the sum of some weighted features and applying some linear transform, the Gated GCN makes use of residual connections in order to incorporate relevant information from previous layers. There is also a sigmoid non-linearity used as a gating mechanism within this model, along with a ReLU, which is used to determine whether or not certain information passing through a layer is considered relevant. Below is the equation for such a network, where the matrices $A,B,C$ signify MLPs within each of the Gated GCN layers.
 
-$$
-    \eta^{l} = \sigma(A^{l}$$
+$$\eta^{l} = \sigma(A^{l}$$
 h_i^l \\h_j^l
 $$
 $$
@@ -155,43 +148,36 @@ The implementation of the LSPE into both the GIN and GatedGCN architectures requ
 
 **GIN-LSPE.**
 Note that the matrices $A, B, C, D$ are MLPs. We can see that there are several residual connections throughout this model architecture, incorporating past nodal and positional information into the layers during updates. All incoming graph attributes are initially passed through an embedding layer. This includes both the node attributes $h$ and positional node embeddings $p$. 
-$$
-h^{l+1} = h^l + ReLU(A^l ReLU(B^l( \begin{bmatrix}
+$$h^{l+1} = h^l + ReLU(A^l ReLU(B^l( \begin{bmatrix}
     h^l\\p^l
 \end{bmatrix}+ \sum_{j \in N(i)} \begin{bmatrix}
     h_i^l\\p_i^l
 \end{bmatrix})))
 $$
-$$
-p^{l+1} = p^l + ReLU(C^l ReLU(D^l (p^l + \sum_{j \in N(i)} p_i^l)))
+$$p^{l+1} = p^l + ReLU(C^l ReLU(D^l (p^l + \sum_{j \in N(i)} p_i^l)))
 $$
 
 **Gated GCN-LSPE.**
 Note that all input in the below equations should initially be passed through an embedding layer that encodes positional information of all attributes used within the layers of this model. This includes the edge attributes $e$, and both the sending and receiving nodes, $h_i$ and $h_j$ resepctively. The layers $A,B,C,D,E$ are MLPs.
-$$
-    \hat{\eta}_{ij} = \sigma(A^l\begin{bmatrix}
+$$\hat{\eta}_{ij} = \sigma(A^l\begin{bmatrix}
 h_i^l \\h_j^l \\e_{ij}
 \end{bmatrix})
 $$
-$$
-    \eta_{ij} = \frac{\hat{\eta}_{ij}}{\sum \hat{\eta}_{ij}}
+$$\eta_{ij} = \frac{\hat{\eta}_{ij}}{\sum \hat{\eta}_{ij}}
 $$
 
+$$h^{l+1} = h^l + ReLU(
+B^l \begin{bmatrix}
+h_j^l\\p_j^l    
+\end{bmatrix} + \sum_{j \in N(i)}\eta_i C^l \begin{bmatrix}
+h_i^l\\p_i^l    
+\end{bmatrix})
 $$
-    h^{l+1} = h^l + ReLU(
-   B^l \begin{bmatrix}
-    h_j^l\\p_j^l    
-    \end{bmatrix} + \sum_{j \in N(i)}\eta_i C^l \begin{bmatrix}
-    h_i^l\\p_i^l    
-    \end{bmatrix})
+$$e^{l+1} = e^l + ReLU(\hat{\eta_{ij}})
 $$
-$$
-    e^{l+1} = e^l + ReLU(\hat{\eta_{ij}})
-$$
-$$
-    p^{l+1} = p^l + ReLU(E^l h + \sum_{j \in N(i)}\eta D^l\begin{bmatrix}
-        p_i^l\\
-    \end{bmatrix})
+$$p^{l+1} = p^l + ReLU(E^l h + \sum_{j \in N(i)}\eta D^l\begin{bmatrix}
+    p_i^l\\
+\end{bmatrix})
 $$
 
 
