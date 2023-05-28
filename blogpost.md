@@ -259,6 +259,58 @@ Within this project, we made modifications to existing graph neural network arch
 ### Future work. 
 Due to time constraints, our experiments were limited to the ZINC dataset. However, future extensions could involve utilizing non-molecular graph datasets such as IMDB-MULTI, IDBM-BINARY (Morris et al., 2020), and CIFAR10, following the approach outlined in Dwivedi et al. (2022). Additionally, it would be valuable to explore the application of LSPE with cellular complex random walks in a Convolutional Isomorphism Network (CIN) architecture, as this architecture has shown state-of-the-art performance when used with larger cell structures (Bodnar et al., 2021).
 # References
+[1] Cristian Bodnar et al. “Weisfeiler and lehman go cellular: Cw networks”. In: Advances in Neural
+Information Processing Systems 34 (2021), pp. 2625–2640.
+[2] Cristian Bodnar et al. Weisfeiler and Lehman Go Topological: Message Passing Simplicial
+Networks. 2021. arXiv: 2103.03212 [cs.LG].
+[3] Xavier Bresson and Thomas Laurent. “Residual gated graph convnets”. In: arXiv preprint
+arXiv:1711.07553 (2017).
+[4] Xavier Bresson and Thomas Laurent. Residual Gated Graph ConvNets. 2018. arXiv: 1711.07553
+[cs.LG].
+[5] Vijay Prakash Dwivedi and Xavier Bresson. A Generalization of Transformer Networks to Graphs.
+2021. arXiv: 2012.09699 [cs.LG].
+9
+[6] Vijay Prakash Dwivedi et al. “Benchmarking graph neural networks”. In: (2020).
+[7] Vijay Prakash Dwivedi et al. Graph Neural Networks with Learnable Structural and Positional
+Representations. 2022. arXiv: 2110.07875 [cs.LG].
+[8] Rini Jasmine Gladstone et al. “GNN-based physics solver for time-independent PDEs”. In: arXiv
+preprint arXiv:2303.15681 (2023).
+[9] John Irwin et al. “ZINC: A Free Tool to Discover Chemistry for Biology”. In: Journal of chemical
+information and modeling 52 (May 2012). doi: 10.1021/ci3001277.
+[10] Wengong Jin, Regina Barzilay, and Tommi Jaakkola. Junction Tree Variational Autoencoder for
+Molecular Graph Generation. 2019. arXiv: 1802.04364 [cs.LG].
+[11] Devin Kreuzer et al. Rethinking Graph Transformers with Spectral Attention. 2021. arXiv: 2106.
+03893 [cs.LG].
+[12] Pan Li et al. Distance Encoding: Design Provably More Powerful Neural Networks for Graph
+Representation Learning. 2020. arXiv: 2009.00142 [cs.LG].
+[13] Andreas Loukas. What graph neural networks cannot learn: depth vs width. 2020. arXiv: 1907.
+03199 [cs.LG].
+[14] Christopher Morris et al. “Tudataset: A collection of benchmark datasets for learning with
+graphs”. In: arXiv preprint arXiv:2007.08663 (2020).
+[15] Christopher Morris et al. “Weisfeiler and Leman Go Neural: Higher-order Graph Neural Networks”.
+In: CoRR abs/1810.02244 (2018). arXiv: 1810.02244. url: http://arxiv.org/abs/1810.02244.
+[16] Ryan L. Murphy et al. Relational Pooling for Graph Representations. 2019. arXiv: 1903.02541
+[cs.LG].
+[17] Vidit Nanda. Computational algebraic topology lecture notes. 2021.
+[18] Mathilde Papillon et al. Architectures of Topological Deep Learning: A Survey on Topological
+Neural Networks. 2023. arXiv: 2304.10031 [cs.LG].
+[19] Huyen Trang Phan, Ngoc Thanh Nguyen, and Dosam Hwang. “Fake news detection: A survey of
+graph neural network methods”. In: Applied Soft Computing (2023), p. 110235.
+[20] Yifei Shen et al. Graph Neural Networks for Scalable Radio Resource Management: Architecture
+Design and Theoretical Analysis. 2020. arXiv: 2007.07632 [cs.IT].
+[21] Balasubramaniam Srinivasan and Bruno Ribeiro. On the Equivalence between Positional Node
+Embeddings and Structural Graph Representations. 2020. arXiv: 1910.00452 [cs.LG].
+[22] Ronen Taub, Tanya Wasserman, and Yonatan Savir. “Symbiotic Message Passing Model for Trans-
+fer Learning between Anti-Fungal and Anti-Bacterial Domains”. In: arXiv preprint arXiv:2304.07017
+(2023).
+[23] Haorui Wang et al. Equivariant and Stable Positional Encoding for More Powerful Graph Neural
+Networks. 2022. arXiv: 2203.00199 [cs.LG].
+[24] Lingfei Wu et al. “Graph neural networks for natural language processing: A survey”. In:
+Foundations and Trends® in Machine Learning 16.2 (2023), pp. 119–328.
+[25] Keyulu Xu et al. “How Powerful are Graph Neural Networks?” In: CoRR abs/1810.00826 (2018).
+arXiv: 1810.00826. url: http://arxiv.org/abs/1810.00826.
+[26] Michihiro Yasunaga et al. “QA-GNN: Reasoning with language models and knowledge graphs for
+question answering”. In: arXiv preprint arXiv:2104.06378 (2021).
 # Appendix 
 ## Appendix A: MPGNN Architectures
 ### Standard MPGNN
