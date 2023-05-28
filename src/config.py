@@ -27,7 +27,7 @@ def parse_train_args():
     parser.add_argument('--devices', type=int, default=1)
     parser.add_argument('--trainer_root_dir', type=str, default=None)
     parser.add_argument('--ckpt_path', type=str, default=None)
-
+    parser.add_argument('--log_dir', type=str, default='lightning_logs')
     args = parser.parse_args()
 
     # extract pe params

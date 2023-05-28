@@ -202,8 +202,8 @@ if __name__ == '__main__':
             model_params['feat_in'] += pe_features
 
     model = LitGNNModel(model_name, model_params, training_params, learnable_pe=args.learnable_pe)
-    logger = pl.loggers.TensorBoardLogger(args.log_dir, name=model_name)
-    csv_logger = pl.loggers.CSVLogger(args.log_dir, name=model_name)
+    logger = pl.loggers.TensorBoardLogger(save_dir=args.log_dir, name=model_name+args.use_pe+args.traverse_type)
+    csv_logger = pl.loggers.CSVLogger(save_dir=args.log_dir, name=model_name+args.use_pe+args.traverse_type)
     trainer = pl.Trainer(max_epochs=args.max_epochs,
                          accelerator=args.accelerator,
                          devices=args.devices,
