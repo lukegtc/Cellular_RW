@@ -55,7 +55,7 @@ Existing MP-GNNs that concatenate the PE with the input node features, follow th
 **Explicit topological features**
 
 
-**Simplicial Complexes (SC).** *Definition* (Nanda, 2021). <em> Let V be a non-empty vertex set. A simplicial complex $\mathcal{K}$ is a collection of nonempty subsets of V that contains all the singleton subsets of V and is closed under the operation of taking subsets. </em> \
+**Simplicial Complexes (SC).** *Definition* (Nanda, 2021). <em> Let V be a non-empty vertex set. A simplicial complex K is a collection of nonempty subsets of V that contains all the singleton subsets of V and is closed under the operation of taking subsets. </em> \
 An element $\sigma \in \mathcal{K}$ is called a k-dimensional simplex.
 In graph neural networks, simplicial complexes can be used to capture higher-order interactions among nodes in a graph. For instance, nodes are 0-simplices, edges are 1-simplices, triangles as 2-simplices, and so on until some predefined n-dimensional simplex. A set of all simplexes within a graph is called a complex. Simplexes are a generalization of a graph in which three edges can form a triangular face, four triangles can form a tetrahedral volume, and so on. Edges only connect pairs of nodes. By constructing simplicial complexes from a graph, higher-order neighborhoods of a node can be defined, and these can be used to improve the performance of the model in various applications. There are different approaches to incorporating simplicial complexes into GNNs, such as using them as additional input features or defining higher-order message-passing schemes. 
 
@@ -77,7 +77,7 @@ The boundary adjacent cells are defined as the lower-dimensional cells on the bo
     <em>Equation 3.</em>
 </p>
 
-More specifically, we use GIN-0 in our experiments, where $\epsilon$ is fixed to 0. As explained by the original authors, GIN-0 generalizes well and outperforms GIN-$\epsilon$ in test accuracy.
+More specifically, we use GIN-0 in our experiments, where epsilon is fixed to 0. As explained by the original authors, GIN-0 generalizes well and outperforms GIN-epsilon in test accuracy.
 
 <p align="center">
     <img src="pictures/gin.png" style="margin:0" alt>
