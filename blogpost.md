@@ -229,7 +229,7 @@ Table 1 presents the hyperparameters used in all the experiments. For the GIN an
 The results of all our experiments on different instances of Random Walk along with performance without using PE are presented in the table below.
 
 
-|    |    Model |     PE type | Cellular in PE |                             Type of Random walk | Train acc | Val acc |   Test acc | Improvement over Vanilla Model | Command                                                                                                      |
+|    |    Model |     PE type | Cellular in PE |                             Type of Random walk | Train L1 loss | Val L1 loss |   Test L1 loss | Improvement over Vanilla Model | Command                                                                                                      |
 |----|---------:|------------:|---------------:|------------------------------------------------:|----------:|--------:|-----------:|-------------------------------:|--------------------------------------------------------------------------------------------------------------|
 |  1 |      GIN |        None |              - |                                                 |     0.100 |   0.435 |   0.422900 |                                | python -m src.train                                                                                          |
 |  2 |      GIN | Random Walk |             No |                                              No |     0.003 |   0.251 |   0.227071 |                         46.31% | python -m src.train --use_pe rw                                                                              |
