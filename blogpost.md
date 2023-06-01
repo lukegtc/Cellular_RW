@@ -154,15 +154,17 @@ We define three additional types of random walk on top of the traditional one (D
 <img src="pictures/up_adj.png" style="margin:0" alt>
 </p>
 <p align="center">
-<em>Figure 5.</em> Boundary adjacent random walk. The edge labeled in red is able to walk to the other edges through the nodes.
+<em>Figure 5.</em> Upper adjacent random walk. The edge labeled in red is able to walk to the other two edges as they are connected by their common cell.
 <p align="center">
 <img src="pictures/boundary_adj.png" style="margin:0" alt>
 </p>
+<p align="center">
+<em>Figure 6.</em> Boundary adjacent random walk. The edge labeled in red is able to walk to the other edges through the nodes.
 
 <p align="center"> 
 <img src="pictures/combined_rw.png" style="margin:0" alt>
 <p align="center">
-    <em>Figure 6.</em> Combined cellular random walk.
+    <em>Figure 7.</em> Combined cellular random walk.
 
 ### Inclusion of LSPE into GIN and GatedGCN architectures
 
@@ -199,7 +201,7 @@ A sample of this dataset is shown in Figure 6 below using the NetworkX package.
 <img  src="pictures/graphrep.png"  style="margin:0"  alt>
 
 <p  align="center">
-<em>Figure 7.</em> A sample molecule from the ZINC dataset.
+<em>Figure 8.</em> A sample molecule from the ZINC dataset.
 
 Each of the nodes within these graphs has its own attribute, as do the edges connecting said nodes. To carry on the cellular setting experiments we add upper and lower adjacency indexes, boundary indexes, and cell features.
 
