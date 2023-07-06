@@ -7,14 +7,14 @@ from torch_geometric.datasets import ZINC
 from torch_geometric.transforms import Compose
 
 import pytorch_lightning as pl
-
+from pytorch_lightning.loggers import WandbLogger
 from src.models.GPSConv import GPSConvWrapper, GPSConvLSPEWrapper
 from src.models.gin import GIN, GINLSPE
 from src.models.GatedGCN import GatedGCN, GatedGCNLSPE
 from src.config import parse_train_args
 from src.topology.cellular import LiftGraphToCC
 from src.topology.pe import AddRandomWalkPE, AddCellularRandomWalkPE, AppendCCRWPE, AppendRWPE
-
+import wandb
 
 class LitGNNModel(pl.LightningModule):
     model_classes = {
@@ -181,6 +181,21 @@ if __name__ == '__main__':
     pe_params['attr_name'] = 'random_walk_pe'
     pe_params['use_node_features'] = True
 
+    wandb.init(
+        name=f"{args.model}_{args.use_pe}_learnable_pe={args.learnable_pe}",
+        project="CRW-GNN",
+        notes="This is a test run",
+        tags=[f'{args.model}', f'{args.use_pe}', f'learnable_pe={args.learnable_pe}'],
+        entity="crw-gnn",
+        config=args,
+    )
+    wandb_logger = WandbLogger(log_model='all')
+
+
+
+
+
+
     data_train, data_val, data_test = load_zinc(args.zinc_folder, args.use_pe, args.learnable_pe, **pe_params)
 
     train_loader = DataLoader(data_train, batch_size=128)
@@ -229,6 +244,7 @@ if __name__ == '__main__':
             model_params['feat_in'] += pe_features
 
     model = LitGNNModel(model_name, model_params, training_params, learnable_pe=args.learnable_pe)
+    wandb.watch(model, log='all')
     if(args.use_pe is not None):
         logger = pl.loggers.TensorBoardLogger(save_dir=args.log_dir, name=model_name+args.use_pe+args.traverse_type)
         csv_logger = pl.loggers.CSVLogger(save_dir=args.log_dir, name=model_name+args.use_pe+args.traverse_type)
@@ -240,6 +256,8 @@ if __name__ == '__main__':
                          devices=args.devices,
                          log_every_n_steps=10,
                          default_root_dir=args.trainer_root_dir,
-                         logger=[logger, csv_logger])
+                         logger=[logger, csv_logger, wandb_logger])
+
     trainer.fit(model, train_loader, val_loader, ckpt_path=args.ckpt_path)
     trainer.test(model, ckpt_path="best", dataloaders=test_loader)
+    wandb.finish()
