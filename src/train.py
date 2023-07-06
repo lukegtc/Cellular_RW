@@ -8,6 +8,7 @@ from torch_geometric.transforms import Compose
 
 import pytorch_lightning as pl
 
+from src.models.GPSConv import GPSConvWrapper, GPSConvLSPEWrapper
 from src.models.gin import GIN, GINLSPE
 from src.models.GatedGCN import GatedGCN, GatedGCNLSPE
 from src.config import parse_train_args
@@ -20,7 +21,9 @@ class LitGNNModel(pl.LightningModule):
         'gin': GIN,
         'gin_lspe': GINLSPE,
         'gated_gcn': GatedGCN,
-        'gated_gcn_lspe': GatedGCNLSPE
+        'gated_gcn_lspe': GatedGCNLSPE,
+        'gps': GPSConvWrapper,
+        'gps_lspe': GPSConvLSPEWrapper,
     }
 
     def __init__(self, model_name, model_params, training_params, learnable_pe=False):
@@ -57,6 +60,23 @@ class LitGNNModel(pl.LightningModule):
                     h, edge_index = batch.x, batch.edge_index
                     h = h.float()
                     return gnn(h, edge_index, batch.batch)
+
+        elif self.model_name.startswith('gps'):
+            if self.learnable_pe:
+
+                def predict(gnn, batch):
+                    h, e, p, edge_index = batch.x, batch.edge_attr, batch.random_walk_pe, batch.edge_index
+                    e = e.float().reshape(-1, 1)
+                    h = h.float()
+                    return gnn(h, e, p, edge_index, batch.batch)
+
+            else:
+                def predict(gnn, batch):
+                    h, edge_index = batch.x, batch.edge_index
+                    h = h.float()
+                    return gnn(h, edge_index, batch.batch)
+
+
         else:
             raise ValueError(f'Unknown model name: {self.model_name}')
 
@@ -177,6 +197,11 @@ if __name__ == '__main__':
     if args.model == 'gated_gcn':
         num_hidden = 60
         num_layers = 16
+
+    if args.model == 'gps':
+        num_hidden=64
+        num_layers=10
+
 
     model_params = {
         'feat_in': feat_in,

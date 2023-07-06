@@ -9,8 +9,8 @@ def parse_train_args():
     parser.add_argument('--subset', type=bool, default=True)
 
     # PE params
-    parser.add_argument('--use_pe', type=str, default=None, choices=['rw', 'ccrw'])  # PE type
-    parser.add_argument('--learnable_pe', type=bool, default=False)  # whether to learn PE or not
+    parser.add_argument('--use_pe', type=str, default='rw', choices=['rw', 'ccrw'])  # PE type
+    parser.add_argument('--learnable_pe', type=bool, default=True)  # whether to learn PE or not
 
     # random walk based PE params
     pe_params = parser.add_argument_group('pe_params')
@@ -19,7 +19,7 @@ def parse_train_args():
                            choices=['boundary', 'upper_adj', 'lower_adj', 'upper_lower', 'upper_lower_boundary'])
 
     # gnn name (we set params inside train script)
-    parser.add_argument('--model', type=str, default='gin', choices=['gin', 'gated_gcn'])
+    parser.add_argument('--model', type=str, default='gps', choices=['gin', 'gated_gcn','gps'])
 
     # training params
     parser.add_argument('--max_epochs', type=int, default=500)
