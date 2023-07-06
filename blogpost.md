@@ -156,15 +156,17 @@ We define three additional types of random walk on top of the traditional one (D
 <img src="pictures/up_adj.png" style="margin:0" alt>
 </p>
 <p align="center">
-<em>Figure 5.</em> Boundary adjacent random walk. The edge labeled in red is able to walk to the other edges through the nodes.
+<em>Figure 5.</em> Upper adjacent random walk. The edge labeled in red is able to walk to the other two edges as they are connected by their common cell.
 <p align="center">
 <img src="pictures/boundary_adj.png" style="margin:0" alt>
 </p>
+<p align="center">
+<em>Figure 6.</em> Boundary adjacent random walk. The edge labeled in red is able to walk to the other edges through the nodes.
 
 <p align="center"> 
 <img src="pictures/combined_rw.png" style="margin:0" alt>
 <p align="center">
-    <em>Figure 6.</em> Combined cellular random walk.
+    <em>Figure 7.</em> Combined cellular random walk.
 
 ### Inclusion of LSPE into GIN and GatedGCN architectures
 
@@ -201,7 +203,7 @@ A sample of this dataset is shown in Figure 6 below using the NetworkX package.
 <img  src="pictures/graphrep.png"  style="margin:0"  alt>
 
 <p  align="center">
-<em>Figure 7.</em> A sample molecule from the ZINC dataset.
+<em>Figure 8.</em> A sample molecule from the ZINC dataset.
 
 Each of the nodes within these graphs has its own attribute, as do the edges connecting said nodes. To carry on the cellular setting experiments we add upper and lower adjacency indexes, boundary indexes, and cell features.
 
@@ -226,7 +228,7 @@ Table 1 presents the hyperparameters used in all the experiments. For the GIN an
 The results of all our experiments on different instances of Random Walk along with performance without using PE are presented in the table below.
 
 
-|    |    Model |     PE type | Cellular in PE |                             Type of Random walk | Train L1 loss | Val L1 loss |   Test L1 loss | Improvement over Vanilla Model | Command                                                                                                      |
+|    |    Model |     PE type | Cellular in PE |                             Type of Random walk | Train L1 loss | Val L1 loss |   Test L1 loss | Improvement of Test Loss over Vanilla Model | Command                                                                                                      |
 |----|---------:|------------:|---------------:|------------------------------------------------:|----------:|--------:|-----------:|-------------------------------:|--------------------------------------------------------------------------------------------------------------|
 |  1 |      GIN |        None |              - |                                                 |     0.100 |   0.435 |   0.422900 |                                | python -m src.train                                                                                          |
 |  2 |      GIN | Random Walk |             No |                                              No |     0.003 |   0.251 |   0.227071 |                         46.31% | python -m src.train --use_pe rw                                                                              |
@@ -255,13 +257,13 @@ The results of all our experiments on different instances of Random Walk along w
 
 **LSPE improves the performance of GIN and Gated GCN.** The inclusion of LSPE improves the loss of the GIN architecture. 
 This is in line with the results of the original paper (Dwivedi et al. (2022)). We see a significant improvement of 53.79\% 
-over the vanilla GIN architecture without positional encoding. The inclusion of more topological information provides a more 
+over the vanilla GIN architecture without positional encoding when basic random walk and LSPE are included. The inclusion of more topological information provides a more 
 robust positional embedding of the graph structure.
  The use of LSPE in the gatedGCN model also resulted in a 52.1\% decrease in the loss. 
 
-**Cellular RW improves GatedGCN.** The performance of the GatedGCN model improves by 15.57\% when cellular random walks 
+**Cellular RW improves GatedGCN.** The performance of the GatedGCN model with LSPE improves by 15.57\% when cellular random walks 
 are included in the positional encoding process. The same can be said for the Gated GCN model that does not employ the 
-LSPE method, which sees an improvement of 36.61\%. When comparing the results of the GatedGCN model with and without any type
+LSPE method, which sees an improvement of 36.61\%. When comparing the results of the GatedGCN model without LSPE with and without any type
 of cellular random walk, we see that any type of this random walk improves the performance of the model. This is in line with 
 our original assumptions.
 

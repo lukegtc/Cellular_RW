@@ -37,17 +37,21 @@ cd Cellular_RW
 
 For CPU:
 ``` 
-conda create -n py3.9 python=3.9
+conda create -n py3.9 python=3.9 -y
+conda activate py3.9
 conda install pytorch cpuonly -c pytorch
+pip install tensorboard
 pip install pytorch-lightning  
 pip install torch_geometric
 pip install pyg_lib torch_scatter torch_sparse torch_cluster torch_spline_conv -f https://data.pyg.org/whl/torch-2.0.0+cpu.html
 ```
 For GPU
 ```
-conda create -n py3.9 python=3.9
+conda create -n py3.9 python=3.9 -y
+conda activate py3.9
 conda install pytorch pytorch-cuda=11.7 -c pytorch -c nvidia
-pip install pytorch-lightning  
+pip install tensorboard
+pip install pytorch-lightning
 pip install torch_geometric
 pip install pyg_lib torch_scatter torch_sparse torch_cluster torch_spline_conv -f https://data.pyg.org/whl/torch-2.0.0+cu117.html
   ```
